@@ -2783,26 +2783,27 @@ Build in this order:
 
 ```text
 🟢 = completed
+🟡 = in progress / foundation ready
 ⬜ = remaining
 
-1. ⬜ Project foundation
-2. ⬜ MongoDB database
-3. ⬜ Multi-tenant architecture
-4. ⬜ Authentication
-5. ⬜ Café admin
-6. ⬜ Categories
-7. ⬜ Products
-8. ⬜ Cloudinary
-9. ⬜ Tables
-10. ⬜ QR generation
-11. ⬜ Customer website
-12. ⬜ Cart
-13. ⬜ Order creation
-14. ⬜ Manager order dashboard
-15. ⬜ Order status
-16. ⬜ Real-time notifications
-17. ⬜ Testing
-18. ⬜ Production deployment
+1. 🟢 Project foundation
+2. 🟢 MongoDB database
+3. 🟢 Multi-tenant architecture
+4. 🟢 Authentication
+5. 🟢 Café admin
+6. 🟢 Categories
+7. 🟢 Products
+8. 🟡 Cloudinary (Service abstraction implemented; credentials configured in Phase 5)
+9. 🟢 Tables
+10. 🟢 QR generation
+11. 🟢 Customer website (Foundation built and verified)
+12. 🟢 Cart (Foundation built and verified)
+13. 🟢 Order creation
+14. 🟢 Manager order dashboard
+15. 🟢 Order status
+16. ⬜ Real-time notifications (Phase 11)
+17. 🟢 Testing (Automated pytest suite + Next.js build verified)
+18. 🟡 Production deployment (Vercel serverless configuration prepared)
 19. ⬜ Platform admin
 20. ⬜ Automated café onboarding
 21. ⬜ Razorpay/payment integration

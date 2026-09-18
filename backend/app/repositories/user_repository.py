@@ -1,0 +1,22 @@
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
+
+class UserRepository:
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self.collection = db.users
+
+    async def get_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        return await self.collection.find_one({"user_id": user_id}, {"_id": 0})
+
+    async def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        return await self.collection.find_one({"email": email.strip().lower()}, {"_id": 0})
+
+    async def create(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        user_data["email"] = user_data["email"].strip().lower()
+        user_data["created_at"] = now
+        await self.collection.insert_one(user_data)
+        user_data.pop("_id", None)
+        return user_data

@@ -1,0 +1,61 @@
+from typing import Dict, Any
+from fastapi import APIRouter, Depends, Response, status
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.core.dependencies import get_db, get_current_user
+from app.core.config import settings
+from app.repositories.user_repository import UserRepository
+from app.repositories.cafe_repository import CafeRepository
+from app.services.auth_service import AuthService
+from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
+
+router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(
+    credentials: LoginRequest,
+    response: Response,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Authenticate café owner/manager and establish session."""
+    user_repo = UserRepository(db)
+    cafe_repo = CafeRepository(db)
+    auth_service = AuthService(user_repo, cafe_repo)
+
+    result = await auth_service.authenticate_user(
+        email=credentials.email,
+        password=credentials.password,
+    )
+
+    # Set secure HTTP-only cookie
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        secure=settings.ENVIRONMENT != "development",
+        samesite="lax",
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+    return result
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    """Clear session cookie and log out."""
+    response.delete_cookie(key="access_token")
+    return {"success": True, "message": "Successfully logged out."}
+
+
+@router.get("/me")
+async def get_me(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Retrieve details of the authenticated user and their café tenant."""
+    cafe_repo = CafeRepository(db)
+    cafe = await cafe_repo.get_by_id(current_user["cafe_id"])
+    return {
+        "user": current_user,
+        "cafe": cafe,
+    }
