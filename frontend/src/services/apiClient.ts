@@ -100,6 +100,37 @@ async function request<T>(
     } catch {
       // Non-JSON response
     }
+
+    // Handle 401 session expiration for tenant-admin pages
+    if (response.status === 401 && typeof window !== "undefined") {
+      const isLoginEndpoint = endpoint.includes("/auth/login");
+      if (!isLoginEndpoint) {
+        const currentPath = window.location.pathname;
+        const isTenantAdminPage =
+          currentPath.startsWith("/dashboard") ||
+          currentPath.startsWith("/menu") ||
+          currentPath.startsWith("/tables") ||
+          currentPath.startsWith("/qr-codes") ||
+          currentPath.startsWith("/orders") ||
+          currentPath.startsWith("/settings");
+
+        if (isTenantAdminPage) {
+          // 1. Clear stale client-side authentication state/token
+          setAuthToken(null);
+
+          // 2. Redirect to /login (preserving cafe context if present)
+          if (!currentPath.startsWith("/login")) {
+            const searchParams = new URLSearchParams(window.location.search);
+            const cafeParam = searchParams.get("cafe");
+            const loginTarget = cafeParam
+              ? `/login?cafe=${encodeURIComponent(cafeParam)}`
+              : "/login";
+            window.location.href = loginTarget;
+          }
+        }
+      }
+    }
+
     throw new ApiError(errorMessage, response.status, errorData);
   }
 

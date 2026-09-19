@@ -355,12 +355,12 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                             <ExternalLink className="h-3 w-3" />
                           </a>
                           <a
-                            href={`/dashboard?cafe=${encodeURIComponent(cafe.subdomain)}`}
+                            href={`/login?cafe=${encodeURIComponent(cafe.subdomain)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border border-slate-200 transition-colors"
                           >
-                            <span>Admin Dashboard</span>
+                            <span>Owner Login</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </td>

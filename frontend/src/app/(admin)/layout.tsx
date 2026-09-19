@@ -1,17 +1,90 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { useTenant } from "@/context/TenantContext";
+import { adminService } from "@/services/apiClient";
+import { User } from "@/types";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const { cafe, subdomain } = useTenant();
+  const { cafe, subdomain, setCafe } = useTenant();
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    adminService
+      .getMe()
+      .then((data) => {
+        if (!isMounted) return;
+
+        const user = data?.user;
+        const userCafe = data?.cafe;
+
+        if (!user) {
+          // Case 1: No authenticated user -> Redirect to /login
+          const loginTarget = subdomain
+            ? `/login?cafe=${encodeURIComponent(subdomain)}`
+            : "/login";
+          router.replace(loginTarget);
+          return;
+        }
+
+        if (user.role === "PLATFORM_ADMIN") {
+          // Case 2: Platform Admin attempting to access café owner dashboard -> Redirect to /admin
+          router.replace("/admin");
+          return;
+        }
+
+        if (user.role === "OWNER" || user.role === "ADMIN") {
+          // Case 3 & 4: Authorized tenant roles -> Allow access
+          setCurrentUser(user);
+          if (userCafe && !cafe) {
+            setCafe(userCafe);
+          }
+          setIsAuthLoading(false);
+          return;
+        }
+
+        // Unrecognized role -> Redirect to /login
+        router.replace("/login");
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        // Case 1: Unauthenticated or network error -> Redirect to /login
+        const loginTarget = subdomain
+          ? `/login?cafe=${encodeURIComponent(subdomain)}`
+          : "/login";
+        router.replace(loginTarget);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router, subdomain, cafe, setCafe]);
+
+  // Case 5: Authentication check still loading -> Show loading state
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-2.5">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+          <div className="text-xs font-semibold text-slate-500">
+            Verifying café administrator permissions...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const dynamicCafeName =
     cafe?.name ||
@@ -33,7 +106,7 @@ export default function AdminLayout({
         <AdminHeader
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           cafeName={dynamicCafeName}
-          userName="Café Owner"
+          userName={currentUser?.name || "Café Owner"}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
