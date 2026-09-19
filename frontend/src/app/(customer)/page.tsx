@@ -14,9 +14,14 @@ import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { UtensilsCrossed } from "lucide-react";
+import { PlatformLanding } from "@/components/platform/PlatformLanding";
 
 export default function CustomerMenuPage() {
-  const { subdomain, cafe, setCafe } = useTenant();
+  const { subdomain, cafe, setCafe, isPlatform } = useTenant();
+
+  if (isPlatform) {
+    return <PlatformLanding />;
+  }
 
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);

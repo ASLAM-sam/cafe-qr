@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Menu, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useTenant } from "@/context/TenantContext";
 
 export interface AdminHeaderProps {
   onToggleSidebar: () => void;
@@ -12,9 +13,15 @@ export interface AdminHeaderProps {
 
 export function AdminHeader({
   onToggleSidebar,
-  cafeName = "Brew House",
+  cafeName = "Café Admin",
   userName = "Owner",
 }: AdminHeaderProps) {
+  const { subdomain } = useTenant();
+  const publicMenuHref =
+    typeof window !== "undefined" && window.location.search.includes("cafe=") && subdomain
+      ? `/?cafe=${encodeURIComponent(subdomain)}`
+      : "/";
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xs sm:px-6">
       <div className="flex items-center gap-3">
@@ -37,7 +44,7 @@ export function AdminHeader({
       <div className="flex items-center gap-3">
         {/* Link to public menu */}
         <Link
-          href="/"
+          href={publicMenuHref}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs transition"

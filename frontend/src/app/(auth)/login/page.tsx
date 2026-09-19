@@ -27,7 +27,11 @@ export default function AdminLoginPage() {
 
     try {
       await adminService.login({ email, password });
-      router.push("/dashboard");
+      const target =
+        typeof window !== "undefined" && window.location.search.includes("cafe=")
+          ? `/dashboard${window.location.search}`
+          : "/dashboard";
+      router.push(target);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message || "Invalid email or password.");
@@ -103,9 +107,12 @@ export default function AdminLoginPage() {
                 Sign In to Dashboard
               </Button>
 
-              <p className="text-[11px] text-center text-slate-400">
-                Authorized café personnel only. Sessions are protected and audited.
-              </p>
+              <div className="flex items-center justify-between w-full pt-1 text-[11px] text-slate-400">
+                <span>Authorized personnel only</span>
+                <a href="/admin" className="text-amber-600 hover:text-amber-700 font-semibold">
+                  Platform Admin →
+                </a>
+              </div>
             </CardFooter>
           </form>
         </Card>

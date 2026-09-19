@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { adminService } from "@/services/apiClient";
 import { useRouter } from "next/navigation";
+import { useTenant } from "@/context/TenantContext";
 
 export interface AdminSidebarProps {
   isOpen?: boolean;
@@ -48,6 +49,14 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { subdomain } = useTenant();
+
+  const getHref = (href: string) => {
+    if (typeof window !== "undefined" && window.location.search.includes("cafe=") && subdomain) {
+      return `${href}?cafe=${encodeURIComponent(subdomain)}`;
+    }
+    return href;
+  };
 
   const handleLogout = async () => {
     try {
@@ -55,7 +64,10 @@ export function AdminSidebar({
     } catch {
       // Ignore errors on logout
     }
-    router.push("/login");
+    const loginTarget = typeof window !== "undefined" && window.location.search.includes("cafe=") && subdomain
+      ? `/login?cafe=${encodeURIComponent(subdomain)}`
+      : "/login";
+    router.push(loginTarget);
   };
 
   return (
@@ -120,7 +132,7 @@ export function AdminSidebar({
                       return (
                         <Link
                           key={child.href}
-                          href={child.href}
+                          href={getHref(child.href)}
                           onClick={onClose}
                           className={cn(
                             "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-150",
@@ -144,7 +156,7 @@ export function AdminSidebar({
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={getHref(item.href)}
                 onClick={onClose}
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-150",
