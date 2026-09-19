@@ -7,12 +7,11 @@ import {
   Plus,
   ExternalLink,
   Shield,
-  Layers,
   CheckCircle2,
   AlertCircle,
   Building2,
-  Lock,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";

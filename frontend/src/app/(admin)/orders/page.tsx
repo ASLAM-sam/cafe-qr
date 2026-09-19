@@ -9,9 +9,11 @@ import { OrderRowSkeleton } from "@/components/ui/Skeleton";
 import { Modal } from "@/components/ui/Modal";
 import { adminService } from "@/services/apiClient";
 import { Order, OrderStatus } from "@/types";
+import { ShoppingBag, RefreshCw, WifiOff, AlertTriangle } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
-import { ShoppingBag, RefreshCw, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { useCafeOrderRealtime } from "@/hooks/useCafeOrderRealtime";
+
+
 import { useTenant } from "@/context/TenantContext";
 
 const STATUS_FILTERS: { label: string; value: string }[] = [

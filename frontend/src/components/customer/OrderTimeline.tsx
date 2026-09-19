@@ -5,7 +5,9 @@ import { Order, OrderStatus } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { CheckCircle2, Clock, Check, Coffee, Wifi, WifiOff } from "lucide-react";
+import { CheckCircle2, Clock, Check, Coffee } from "lucide-react";
+
+
 import { useCustomerOrderRealtime } from "@/hooks/useCustomerOrderRealtime";
 import { useTenant } from "@/context/TenantContext";
 

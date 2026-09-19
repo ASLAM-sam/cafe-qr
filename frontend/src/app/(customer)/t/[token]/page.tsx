@@ -15,24 +15,33 @@ export default function TableQrRedirectPage() {
   React.useEffect(() => {
     async function resolveToken() {
       if (!token) return;
+      let resolvedCafeSubdomain: string | null = subdomain;
       try {
-        const table = await customerService.resolveTableToken(
+        const res = await customerService.resolveTableToken(
           subdomain || "default",
           token
-        );
-        if (table) {
-          setTableContext(table.qr_token, table.table_number);
+        ) as unknown as { table?: { qr_token: string; table_number: string }; cafe?: { subdomain: string } };
+
+        if (res?.table) {
+          setTableContext(res.table.qr_token, res.table.table_number);
+        }
+        if (res?.cafe?.subdomain) {
+          resolvedCafeSubdomain = res.cafe.subdomain;
         }
       } catch {
         // Fallback: store token directly
         setTableContext(token, null);
       } finally {
-        router.replace("/");
+        const targetUrl = resolvedCafeSubdomain
+          ? `/?cafe=${encodeURIComponent(resolvedCafeSubdomain)}`
+          : "/";
+        router.replace(targetUrl);
       }
     }
 
     resolveToken();
   }, [token, subdomain, setTableContext, router]);
+
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center p-4 text-center">

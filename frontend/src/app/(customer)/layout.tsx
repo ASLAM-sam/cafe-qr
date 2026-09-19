@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { TenantProvider, useTenant } from "@/context/TenantContext";
+import { useTenant } from "@/context/TenantContext";
 import { CartProvider } from "@/context/CartContext";
+
 import { CustomerHeader } from "@/components/customer/CustomerHeader";
 
 function CustomerShell({ children }: { children: React.ReactNode }) {

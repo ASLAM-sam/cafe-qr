@@ -2,27 +2,30 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Coffee,
   QrCode,
-  ShieldCheck,
   Smartphone,
-  Sparkles,
-  ArrowRight,
-  Layers,
   Clock,
+  ShieldCheck,
   ExternalLink,
+  ArrowRight,
+  Sparkles,
+  Layers,
   CheckCircle2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 
 export function PlatformLanding() {
+  const router = useRouter();
   const [customSlug, setCustomSlug] = React.useState("");
 
   const handleLaunchCustomCafe = (e: React.FormEvent) => {
     e.preventDefault();
     if (customSlug.trim()) {
-      window.location.href = `/?cafe=${encodeURIComponent(customSlug.trim().toLowerCase())}`;
+      router.push(`/?cafe=${encodeURIComponent(customSlug.trim().toLowerCase())}`);
     }
   };
 
@@ -222,19 +225,19 @@ export function PlatformLanding() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-slate-800">
-                <a
+                <Link
                   href="/?cafe=brewhouse"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 transition-colors shadow-sm"
                 >
                   <span>Open Customer Menu</span>
                   <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/dashboard?cafe=brewhouse"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-2.5 transition-colors border border-slate-700"
                 >
                   <span>Café Dashboard</span>
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -265,20 +268,21 @@ export function PlatformLanding() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-slate-800">
-                <a
+                <Link
                   href="/?cafe=mochacafe"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 transition-colors shadow-sm"
                 >
                   <span>Open Customer Menu</span>
                   <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/dashboard?cafe=mochacafe"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-2.5 transition-colors border border-slate-700"
                 >
                   <span>Café Dashboard</span>
-                </a>
+                </Link>
               </div>
+
             </div>
           </div>
 
@@ -315,8 +319,9 @@ export function PlatformLanding() {
               Built for Scale & Simplicity
             </span>
             <h2 className="text-3xl font-extrabold text-white mt-2">
-              Everything Your Café Needs, Nothing It Doesn't
+              Everything Your Café Needs, Nothing It Doesn&apos;t
             </h2>
+
             <p className="text-slate-400 text-sm mt-3">
               Designed strictly for cafés and roasteries without the bloated complexity of traditional restaurant POS/ERP systems.
             </p>

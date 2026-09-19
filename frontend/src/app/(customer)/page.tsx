@@ -19,10 +19,6 @@ import { PlatformLanding } from "@/components/platform/PlatformLanding";
 export default function CustomerMenuPage() {
   const { subdomain, cafe, setCafe, isPlatform } = useTenant();
 
-  if (isPlatform) {
-    return <PlatformLanding />;
-  }
-
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
@@ -34,6 +30,11 @@ export default function CustomerMenuPage() {
   const [isOrderTrackingOpen, setIsOrderTrackingOpen] = React.useState(false);
 
   const loadMenuData = React.useCallback(async () => {
+    if (isPlatform) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const activeSubdomain = subdomain || "default";
 
@@ -62,7 +63,7 @@ export default function CustomerMenuPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [subdomain, setCafe]);
+  }, [isPlatform, subdomain, setCafe]);
 
   React.useEffect(() => {
     loadMenuData();
@@ -78,7 +79,13 @@ export default function CustomerMenuPage() {
     setIsOrderTrackingOpen(true);
   };
 
+  // Only render PlatformLanding AFTER all hooks have executed unconditionally
+  if (isPlatform) {
+    return <PlatformLanding />;
+  }
+
   return (
+
     <div>
       {/* Cafe Hero & Branding */}
       <CustomerHero />

@@ -16,28 +16,36 @@ db_state = Database()
 
 
 def get_database() -> AsyncIOMotorDatabase:
-    """Return the active database instance."""
+    """Return the active database instance, initializing lazily if needed for serverless resilience."""
     if db_state.db is None:
-        raise RuntimeError("Database is not connected. Ensure connect_to_mongo was called.")
+        db_state.client = AsyncIOMotorClient(
+            settings.MONGODB_URI,
+            serverSelectionTimeoutMS=5000,
+            maxPoolSize=50,
+            minPoolSize=1,
+        )
+        db_state.db = db_state.client[settings.MONGODB_DATABASE]
     return db_state.db
 
 
 async def connect_to_mongo():
     """Initialize MongoDB client and verify connectivity."""
     try:
-        db_state.client = AsyncIOMotorClient(
-            settings.MONGODB_URI,
-            serverSelectionTimeoutMS=5000,
-            maxPoolSize=50,
-            minPoolSize=5,
-        )
-        db_state.db = db_state.client[settings.MONGODB_DATABASE]
+        if db_state.client is None:
+            db_state.client = AsyncIOMotorClient(
+                settings.MONGODB_URI,
+                serverSelectionTimeoutMS=5000,
+                maxPoolSize=50,
+                minPoolSize=1,
+            )
+            db_state.db = db_state.client[settings.MONGODB_DATABASE]
         # Ping server
         await db_state.client.admin.command("ping")
         logger.info("Successfully connected to MongoDB Atlas / instance.")
         await create_indexes()
     except Exception as e:
         logger.warning(f"MongoDB initial connection warning: {e}. App will start, but DB operations will retry.")
+
 
 
 async def close_mongo_connection():

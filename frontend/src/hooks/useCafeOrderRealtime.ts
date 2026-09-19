@@ -38,7 +38,9 @@ export function useCafeOrderRealtime(cafeId?: string) {
   
   // Track orders ref to avoid stale closures in event handlers
   const ordersRef = useRef<Order[]>([]);
-  ordersRef.current = orders;
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   const fetchOrders = useCallback(async () => {
     try {

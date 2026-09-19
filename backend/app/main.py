@@ -1,3 +1,14 @@
+import sys
+import os
+
+# Ensure parent directory (backend/) is in sys.path so 'app...' imports work regardless of entrypoint
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
@@ -37,12 +48,20 @@ app = FastAPI(
 
 # CORS Configuration
 # Secure origin regex allowing dynamic cafe subdomains (*.mydomain.com)
-clean_domain = settings.APP_DOMAIN.split(":")[0].strip().lower()
+clean_domain = (
+    settings.APP_DOMAIN.replace("https://", "")
+    .replace("http://", "")
+    .split("/")[0]
+    .split(":")[0]
+    .strip()
+    .lower()
+)
 if settings.ENVIRONMENT == "development":
     cors_origin_regex = r"^https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1)(:[0-9]+)?$"
 else:
     import re
     cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)?{re.escape(clean_domain)}$"
+
 
 app.add_middleware(
     CORSMiddleware,
