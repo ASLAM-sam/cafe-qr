@@ -196,6 +196,24 @@ def auth_headers_b():
 
 
 @pytest.fixture
+def platform_admin_headers(mock_db):
+    now = datetime.now(timezone.utc)
+    admin_user = {
+        "user_id": "user_platform_admin",
+        "cafe_id": "platform",
+        "username": "aslam",
+        "name": "Platform Administrator",
+        "password_hash": hash_password("aslam0077"),
+        "role": "PLATFORM_ADMIN",
+        "status": "ACTIVE",
+        "created_at": now,
+    }
+    mock_db.users.data.append(admin_user)
+    token = create_access_token({"sub": "user_platform_admin", "cafe_id": "platform", "role": "PLATFORM_ADMIN"})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
 async def async_client(mock_db):
     app.dependency_overrides[get_db] = lambda: mock_db
     transport = ASGITransport(app=app)

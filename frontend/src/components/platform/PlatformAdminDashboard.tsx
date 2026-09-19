@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { platformService } from "@/services/apiClient";
+import { User } from "@/types";
+import { LogOut } from "lucide-react";
 
 interface ManagedCafe {
   cafe_id?: string;
@@ -32,7 +34,12 @@ interface ManagedCafe {
   created_at?: string;
 }
 
-export function PlatformAdminDashboard() {
+interface PlatformAdminDashboardProps {
+  user?: User | null;
+  onLogout?: () => void;
+}
+
+export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboardProps) {
   const { showToast } = useToast();
 
   const [cafes, setCafes] = React.useState<ManagedCafe[]>([]);
@@ -53,18 +60,34 @@ export function PlatformAdminDashboard() {
     description: "",
   });
 
+  const handleSignOut = async () => {
+    try {
+      await platformService.logout();
+    } finally {
+      if (onLogout) {
+        onLogout();
+      }
+    }
+  };
+
   // Load registered cafes from real backend API
   const loadCafes = React.useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await platformService.listCafes();
       setCafes(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof Error && (err.message.includes("401") || err.message.includes("Unauthorized"))) {
+        showToast("error", "Platform session expired. Please sign in again.", "Unauthorized");
+        if (onLogout) {
+          onLogout();
+        }
+      }
       setCafes([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [onLogout, showToast]);
 
   React.useEffect(() => {
     loadCafes();
@@ -161,6 +184,12 @@ export function PlatformAdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            {user?.username && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
+                <span className="text-slate-400">User:</span>
+                <span className="font-semibold text-slate-900">{user.username}</span>
+              </div>
+            )}
             <Link href="/">
               <Button variant="outline" size="sm" className="text-xs">
                 View Platform Website
@@ -174,6 +203,15 @@ export function PlatformAdminDashboard() {
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               <span>Onboard New Café</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+            >
+              <LogOut className="h-3.5 w-3.5 mr-1.5" />
+              <span>Sign Out</span>
             </Button>
           </div>
         </div>

@@ -26,17 +26,19 @@ async def login(
     auth_service = AuthService(user_repo, cafe_repo)
 
     result = await auth_service.authenticate_user(
-        email=credentials.email,
+        email=str(credentials.email) if credentials.email else None,
+        username=credentials.username,
         password=credentials.password,
     )
 
-    # Set secure HTTP-only cookie
+    # Set secure HTTP-only cookie (none for cross-site production, lax for local development)
+    samesite_val = "none" if settings.ENVIRONMENT != "development" else "lax"
     response.set_cookie(
         key="access_token",
         value=result["access_token"],
         httponly=True,
         secure=settings.ENVIRONMENT != "development",
-        samesite="lax",
+        samesite=samesite_val,
         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
@@ -46,7 +48,12 @@ async def login(
 @router.post("/logout")
 async def logout(response: Response):
     """Clear session cookie and log out."""
-    response.delete_cookie(key="access_token")
+    samesite_val = "none" if settings.ENVIRONMENT != "development" else "lax"
+    response.delete_cookie(
+        key="access_token",
+        secure=settings.ENVIRONMENT != "development",
+        samesite=samesite_val,
+    )
     return {"success": True, "message": "Successfully logged out."}
 
 
@@ -56,8 +63,10 @@ async def get_me(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Retrieve details of the authenticated user and their café tenant."""
-    cafe_repo = CafeRepository(db)
-    cafe = await cafe_repo.get_by_id(current_user["cafe_id"])
+    cafe = None
+    if current_user.get("cafe_id") and current_user.get("cafe_id") != "platform":
+        cafe_repo = CafeRepository(db)
+        cafe = await cafe_repo.get_by_id(current_user["cafe_id"])
     return {
         "user": current_user,
         "cafe": cafe,

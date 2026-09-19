@@ -1,4 +1,4 @@
-export type Role = "OWNER" | "ADMIN";
+export type Role = "OWNER" | "ADMIN" | "PLATFORM_ADMIN";
 
 export interface CafeTaxSettings {
   tax_enabled: boolean;
@@ -26,9 +26,10 @@ export interface Cafe {
 
 export interface User {
   user_id: string;
-  cafe_id: string;
-  name: string;
-  email: string;
+  cafe_id?: string;
+  name?: string;
+  email?: string;
+  username?: string;
   role: Role;
   status: "ACTIVE" | "INACTIVE";
   created_at: string;

@@ -32,6 +32,27 @@ async def lifespan(app: FastAPI):
     """Application lifespan managing DB connection setup and teardown."""
     logger.info("Starting Café QR Ordering Backend...")
     await connect_to_mongo()
+    try:
+        from app.core.database import get_database
+        from app.repositories.user_repository import UserRepository
+        from app.core.security import hash_password
+        from app.utils.ids import generate_id
+        db = get_database()
+        user_repo = UserRepository(db)
+        existing = await user_repo.get_by_username("aslam")
+        if not existing:
+            await user_repo.create({
+                "user_id": generate_id("user"),
+                "username": "aslam",
+                "name": "Platform Admin",
+                "role": "PLATFORM_ADMIN",
+                "cafe_id": "platform",
+                "status": "ACTIVE",
+                "password_hash": hash_password("aslam0077"),
+            })
+            logger.info("Initial platform admin 'aslam' provisioned.")
+    except Exception as e:
+        logger.warning(f"Platform admin provisioning check: {e}")
     yield
     logger.info("Shutting down Café QR Ordering Backend...")
     await close_mongo_connection()

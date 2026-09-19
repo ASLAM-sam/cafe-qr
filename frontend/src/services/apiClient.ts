@@ -29,6 +29,27 @@ export function buildApiUrl(endpoint: string): string {
   return normalizeUrl(API_BASE_URL, endpoint);
 }
 
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+  if (typeof window !== "undefined") {
+    if (token) {
+      sessionStorage.setItem("platform_auth_token", token);
+    } else {
+      sessionStorage.removeItem("platform_auth_token");
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (authToken) return authToken;
+  if (typeof window !== "undefined") {
+    authToken = sessionStorage.getItem("platform_auth_token");
+  }
+  return authToken;
+}
+
 export class ApiError extends Error {
   status: number;
   data: unknown;
@@ -47,11 +68,16 @@ async function request<T>(
   subdomain?: string
 ): Promise<T> {
   const url = buildApiUrl(endpoint);
+  const token = getAuthToken();
 
   const headers: Record<string, string> = {
     ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   if (subdomain) {
     headers["X-Tenant-Subdomain"] = subdomain;
@@ -133,17 +159,28 @@ export const customerService = {
  * Admin Dashboard Services
  */
 export const adminService = {
-  login: (credentials: { email: string; password: string }) =>
-    request<{ access_token: string; token_type: string; user: { name: string; email: string; cafe_id: string } }>(
-      `/auth/login`,
-      {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      }
-    ),
+  login: async (credentials: { email?: string; username?: string; password: string }) => {
+    const res = await request<{
+      access_token: string;
+      token_type: string;
+      user: { name: string; email?: string; username?: string; cafe_id: string };
+    }>(`/auth/login`, {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+    if (res.access_token) {
+      setAuthToken(res.access_token);
+    }
+    return res;
+  },
 
-  logout: () =>
-    request<{ success: boolean; message?: string }>(`/auth/logout`, { method: "POST" }),
+  logout: async () => {
+    try {
+      await request<{ success: boolean; message?: string }>(`/auth/logout`, { method: "POST" });
+    } finally {
+      setAuthToken(null);
+    }
+  },
 
   getMe: () =>
     request<{ user: User; cafe: Cafe }>(`/auth/me`, { method: "GET" }),
@@ -289,6 +326,32 @@ export const adminService = {
  * Platform Admin Services
  */
 export const platformService = {
+  login: async (credentials: { username: string; password: string }) => {
+    const res = await request<{
+      access_token: string;
+      token_type: string;
+      user: User;
+    }>(`/auth/login`, {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+    if (res.access_token) {
+      setAuthToken(res.access_token);
+    }
+    return res;
+  },
+
+  logout: async () => {
+    try {
+      await request<{ success: boolean; message?: string }>(`/auth/logout`, { method: "POST" });
+    } finally {
+      setAuthToken(null);
+    }
+  },
+
+  getMe: () =>
+    request<{ user: User; cafe?: Cafe }>(`/auth/me`, { method: "GET" }),
+
   listCafes: () =>
     request<
       {

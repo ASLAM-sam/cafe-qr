@@ -13,9 +13,15 @@ class UserRepository:
     async def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         return await self.collection.find_one({"email": email.strip().lower()}, {"_id": 0})
 
+    async def get_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        return await self.collection.find_one({"username": username.strip().lower()}, {"_id": 0})
+
     async def create(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         now = datetime.now(timezone.utc)
-        user_data["email"] = user_data["email"].strip().lower()
+        if "email" in user_data and user_data["email"]:
+            user_data["email"] = user_data["email"].strip().lower()
+        if "username" in user_data and user_data["username"]:
+            user_data["username"] = user_data["username"].strip().lower()
         user_data["created_at"] = now
         await self.collection.insert_one(user_data)
         user_data.pop("_id", None)
