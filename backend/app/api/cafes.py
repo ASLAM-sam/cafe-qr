@@ -11,6 +11,7 @@ router = APIRouter(tags=["Cafés"])
 
 
 @router.get("/api/public/cafe", response_model=PublicCafeResponse)
+@router.get("/public/cafe", response_model=PublicCafeResponse)
 async def get_public_cafe(
     subdomain: str = Depends(get_public_subdomain),
     db: AsyncIOMotorDatabase = Depends(get_db),

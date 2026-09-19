@@ -19,6 +19,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
+import { platformService } from "@/services/apiClient";
 
 interface ManagedCafe {
   cafe_id?: string;
@@ -56,16 +57,8 @@ export function PlatformAdminDashboard() {
   const loadCafes = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/platform/cafes", {
-        method: "GET",
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCafes(Array.isArray(data) ? data : []);
-      } else {
-        setCafes([]);
-      }
+      const data = await platformService.listCafes();
+      setCafes(Array.isArray(data) ? data : []);
     } catch {
       setCafes([]);
     } finally {
@@ -83,27 +76,16 @@ export function PlatformAdminDashboard() {
     setSubmitError(null);
 
     try {
-      const response = await fetch("/api/platform/cafes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          subdomain: formData.subdomain.trim().toLowerCase(),
-          owner_name: formData.owner_name.trim(),
-          owner_email: formData.owner_email.trim().toLowerCase(),
-          owner_password: formData.owner_password,
-          currency: formData.currency,
-          primary_color: formData.primary_color,
-          description: formData.description.trim() || undefined,
-        }),
+      const created = await platformService.createCafe({
+        name: formData.name.trim(),
+        subdomain: formData.subdomain.trim().toLowerCase(),
+        owner_name: formData.owner_name.trim(),
+        owner_email: formData.owner_email.trim().toLowerCase(),
+        owner_password: formData.owner_password,
+        currency: formData.currency,
+        primary_color: formData.primary_color,
+        description: formData.description.trim() || undefined,
       });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ detail: "Failed to create café." }));
-        throw new Error(errorBody.detail || "Failed to create café.");
-      }
-
-      const created = await response.json();
 
       const newCafe: ManagedCafe = {
         cafe_id: created.cafe_id || `cafe_${Date.now()}`,

@@ -13,6 +13,7 @@ router = APIRouter(tags=["Products"])
 
 
 @router.get("/api/public/products", response_model=List[ProductResponse])
+@router.get("/public/products", response_model=List[ProductResponse])
 async def get_public_products(
     category_id: Optional[str] = Query(None),
     subdomain: str = Depends(get_public_subdomain),

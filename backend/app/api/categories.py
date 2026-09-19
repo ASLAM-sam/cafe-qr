@@ -12,6 +12,7 @@ router = APIRouter(tags=["Categories"])
 
 
 @router.get("/api/public/categories", response_model=List[CategoryResponse])
+@router.get("/public/categories", response_model=List[CategoryResponse])
 async def get_public_categories(
     subdomain: str = Depends(get_public_subdomain),
     db: AsyncIOMotorDatabase = Depends(get_db),

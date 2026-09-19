@@ -2,6 +2,33 @@ import { Cafe, Category, Product, Order, Table, User } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
+/**
+ * Normalizes base URL and endpoint into a clean backend URL.
+ * Guarantees:
+ * - Trailing slashes on base URL are stripped
+ * - Leading slashes on endpoint are stripped
+ * - Double slashes ('//') anywhere in the path are eliminated
+ * - Preserves target backend protocol (http:// or https://)
+ * - Avoids duplicate '/api/api' segments
+ */
+export function normalizeUrl(base: string, endpoint: string): string {
+  const cleanBase = base.trim().replace(/\/+$/, "");
+  let cleanEndpoint = endpoint.trim().replace(/^\/+/, "");
+
+  // Prevent duplicate '/api/api' if both base ends with '/api' and endpoint starts with 'api/'
+  if (cleanBase.endsWith("/api") && cleanEndpoint.startsWith("api/")) {
+    cleanEndpoint = cleanEndpoint.slice(4);
+  }
+
+  // Combine and replace any repeated internal slashes (preserving protocol ://)
+  const combined = `${cleanBase}/${cleanEndpoint}`;
+  return combined.replace(/([^:]\/)\/+/g, "$1");
+}
+
+export function buildApiUrl(endpoint: string): string {
+  return normalizeUrl(API_BASE_URL, endpoint);
+}
+
 export class ApiError extends Error {
   status: number;
   data: unknown;
@@ -19,7 +46,7 @@ async function request<T>(
   options: RequestInit = {},
   subdomain?: string
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const url = buildApiUrl(endpoint);
 
   const headers: Record<string, string> = {
     ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
@@ -252,8 +279,50 @@ export const adminService = {
     }),
 
   getTableQrUrl: (tableId: string) =>
-    `${API_BASE_URL}/tables/${encodeURIComponent(tableId)}/qr`,
+    buildApiUrl(`/tables/${encodeURIComponent(tableId)}/qr`),
 
   getRealtimeToken: () =>
     request<{ tokenRequest: Record<string, unknown> }>(`/realtime/token`, { method: "GET" }),
+};
+
+/**
+ * Platform Admin Services
+ */
+export const platformService = {
+  listCafes: () =>
+    request<
+      {
+        cafe_id?: string;
+        name: string;
+        subdomain: string;
+        owner_name?: string;
+        owner_email?: string;
+        currency: string;
+        status: "ACTIVE" | "INACTIVE";
+        created_at?: string;
+      }[]
+    >(`/platform/cafes`, { method: "GET" }),
+
+  createCafe: (data: {
+    name: string;
+    subdomain: string;
+    owner_name: string;
+    owner_email: string;
+    owner_password: string;
+    currency: string;
+    primary_color?: string;
+    description?: string;
+  }) =>
+    request<{
+      cafe_id: string;
+      name: string;
+      subdomain: string;
+      owner_name: string;
+      owner_email: string;
+      currency: string;
+      status: "ACTIVE" | "INACTIVE";
+    }>(`/platform/cafes`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };

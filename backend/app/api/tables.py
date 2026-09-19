@@ -12,6 +12,7 @@ router = APIRouter(tags=["Tables"])
 
 
 @router.get("/api/public/table/{qr_token}")
+@router.get("/public/table/{qr_token}")
 async def resolve_table(
     qr_token: str,
     request: Request,

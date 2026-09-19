@@ -14,6 +14,7 @@ router = APIRouter(tags=["Orders"])
 
 
 @router.post("/api/public/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/public/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_customer_order(
     data: OrderCreateRequest,
     request: Request,
@@ -51,6 +52,7 @@ async def create_customer_order(
 
 
 @router.get("/api/public/orders/{order_reference}", response_model=OrderResponse)
+@router.get("/public/orders/{order_reference}", response_model=OrderResponse)
 async def get_customer_order_status(
     order_reference: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
