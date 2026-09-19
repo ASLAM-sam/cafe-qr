@@ -5,7 +5,9 @@ import { Order, OrderStatus } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { CheckCircle2, Clock, Check, Coffee } from "lucide-react";
+import { CheckCircle2, Clock, Check, Coffee, Wifi, WifiOff } from "lucide-react";
+import { useCustomerOrderRealtime } from "@/hooks/useCustomerOrderRealtime";
+import { useTenant } from "@/context/TenantContext";
 
 export interface OrderTimelineProps {
   order: Order | null;
@@ -21,7 +23,16 @@ const ORDER_STEPS: { status: OrderStatus; label: string }[] = [
   { status: "COMPLETED", label: "Completed" },
 ];
 
-export function OrderTimeline({ order, isOpen, onClose }: OrderTimelineProps) {
+export function OrderTimeline({ order: initialOrder, isOpen, onClose }: OrderTimelineProps) {
+  const { subdomain } = useTenant();
+  const orderRef = initialOrder?.order_reference || initialOrder?.order_id;
+  const { order: realtimeOrder, connectionState } = useCustomerOrderRealtime(
+    subdomain || "default",
+    isOpen ? orderRef : undefined
+  );
+
+  const order = realtimeOrder || initialOrder;
+
   if (!order) return null;
 
   const currentStepIndex = ORDER_STEPS.findIndex(
@@ -44,7 +55,20 @@ export function OrderTimeline({ order, isOpen, onClose }: OrderTimelineProps) {
         {/* Status Header Badge */}
         <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3.5 border border-slate-200">
           <div>
-            <span className="text-xs text-slate-500 block">Current Status</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-500">Current Status</span>
+              {connectionState === "connected" ? (
+                <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Syncing
+                </span>
+              )}
+            </div>
             <span className="text-sm font-bold text-slate-900">
               {order.order_status}
             </span>

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, status
@@ -5,7 +6,10 @@ from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.table_repository import TableRepository
 from app.repositories.cafe_repository import CafeRepository
+from app.services.ably_service import AblyService, ably_service
 from app.utils.ids import generate_id, generate_order_reference
+
+logger = logging.getLogger("cafe_qr.order_service")
 
 
 VALID_TRANSITIONS = {
@@ -25,11 +29,13 @@ class OrderService:
         product_repo: ProductRepository,
         table_repo: TableRepository,
         cafe_repo: CafeRepository,
+        pub_service: AblyService = ably_service,
     ):
         self.order_repo = order_repo
         self.product_repo = product_repo
         self.table_repo = table_repo
         self.cafe_repo = cafe_repo
+        self.ably_service = pub_service
 
     async def create_order(
         self,
@@ -161,6 +167,11 @@ class OrderService:
         }
 
         created = await self.order_repo.create(order_record)
+        # Authoritative DB write succeeded; publish real-time notification
+        try:
+            await self.ably_service.publish_new_order(created)
+        except Exception as e:
+            logger.error(f"Failed to publish NEW_ORDER via Ably: {e}")
         return created
 
     async def get_order_by_reference(self, order_reference: str) -> Dict[str, Any]:
@@ -197,6 +208,12 @@ class OrderService:
         updated = await self.order_repo.update_status(cafe_id, order_id, new_status)
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+
+        # Authoritative DB update succeeded; publish status event
+        try:
+            await self.ably_service.publish_order_status_update(updated, new_status)
+        except Exception as e:
+            logger.error(f"Failed to publish ORDER_{new_status} via Ably: {e}")
         return updated
 
     async def get_dashboard_stats(self, cafe_id: str) -> Dict[str, int]:

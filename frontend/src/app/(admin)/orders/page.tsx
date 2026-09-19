@@ -10,41 +10,61 @@ import { Modal } from "@/components/ui/Modal";
 import { adminService } from "@/services/apiClient";
 import { Order, OrderStatus } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, RefreshCw, Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { useCafeOrderRealtime } from "@/hooks/useCafeOrderRealtime";
+import { useTenant } from "@/context/TenantContext";
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "All Orders", value: "ALL" },
   { label: "Pending", value: "PLACED" },
+  { label: "Accepted", value: "ACCEPTED" },
   { label: "Preparing", value: "PREPARING" },
   { label: "Ready", value: "READY" },
   { label: "Completed", value: "COMPLETED" },
 ];
 
 export default function AdminOrdersPage() {
+  const { cafe } = useTenant();
+  const [currentCafeId, setCurrentCafeId] = React.useState<string | undefined>(cafe?.cafe_id);
   const [selectedFilter, setSelectedFilter] = React.useState("ALL");
-  const [orders, setOrders] = React.useState<Order[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
-  const fetchOrders = React.useCallback(async () => {
-    try {
-      const data = await adminService.getOrders(selectedFilter);
-      setOrders(data || []);
-    } catch {
-      // Zero fake data rule: empty list if unpopulated/error
-      setOrders([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedFilter]);
-
+  // If cafe_id is not yet in TenantContext, retrieve from auth /me
   React.useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (cafe?.cafe_id) {
+      setCurrentCafeId(cafe.cafe_id);
+    } else {
+      adminService.getMe()
+        .then((res) => {
+          if (res?.user?.cafe_id) {
+            setCurrentCafeId(res.user.cafe_id);
+          }
+        })
+        .catch(() => {
+          // Unauthenticated or not loaded yet
+        });
+    }
+  }, [cafe]);
+
+  const {
+    orders,
+    loading: isLoading,
+    error: loadError,
+    connectionState,
+    refreshOrders,
+    setOrders,
+  } = useCafeOrderRealtime(currentCafeId);
+
+  const filteredOrders = React.useMemo(() => {
+    if (selectedFilter === "ALL") return orders;
+    return orders.filter((o) => o.order_status === selectedFilter);
+  }, [orders, selectedFilter]);
 
   const handleStatusTransition = async (orderId: string, nextStatus: OrderStatus) => {
     setIsUpdatingStatus(true);
+    setActionError(null);
     try {
       const updated = await adminService.updateOrderStatus(orderId, nextStatus);
       setOrders((prev) =>
@@ -54,7 +74,8 @@ export default function AdminOrdersPage() {
         setSelectedOrder(updated);
       }
     } catch (e) {
-      console.error("Status update error", e);
+      const msg = e instanceof Error ? e.message : "Failed to update order status.";
+      setActionError(msg);
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -62,20 +83,89 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Orders"
-        description="Monitor and manage real-time table orders from customers."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <PageHeader
+          title="Orders"
+          description="Monitor and manage real-time table orders from customers."
+        />
+
+        {/* Real-time Connection Status & Refresh */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border",
+              connectionState === "connected"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : connectionState === "connecting"
+                ? "bg-sky-50 text-sky-700 border-sky-200"
+                : "bg-amber-50 text-amber-700 border-amber-200"
+            )}
+            title={
+              connectionState === "connected"
+                ? "Connected to Ably real-time stream"
+                : connectionState === "connecting"
+                ? "Establishing live connection..."
+                : "Live updates temporarily disconnected"
+            }
+          >
+            {connectionState === "connected" ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live</span>
+              </>
+            ) : connectionState === "connecting" ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-3 w-3 text-amber-600" />
+                <span>Offline Sync</span>
+              </>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refreshOrders()}
+            className="gap-1.5"
+            title="Refresh orders manually"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
+      </div>
+
+      {connectionState === "disconnected" && (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+          <span>
+            Live updates are temporarily disconnected. You can continue managing orders normally and use the Refresh button to pull latest data.
+          </span>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+          {actionError}
+        </div>
+      )}
+
+      {loadError && (
+        <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+          {loadError}
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-slate-200 pb-3 no-scrollbar">
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value}
-            onClick={() => {
-              setSelectedFilter(f.value);
-              setIsLoading(true);
-            }}
+            onClick={() => setSelectedFilter(f.value)}
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 shrink-0",
               selectedFilter === f.value
@@ -95,7 +185,7 @@ export default function AdminOrdersPage() {
           <OrderRowSkeleton />
           <OrderRowSkeleton />
         </div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <EmptyState
           icon={ShoppingBag}
           title="No orders found"
@@ -109,7 +199,7 @@ export default function AdminOrdersPage() {
         />
       ) : (
         <div className="space-y-3">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div
               key={order.order_id}
               onClick={() => setSelectedOrder(order)}
@@ -132,7 +222,7 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                 <span className="text-sm font-bold text-slate-900">
                   {formatCurrency(order.total)}
                 </span>
@@ -140,6 +230,7 @@ export default function AdminOrdersPage() {
                   <Button
                     size="sm"
                     variant="primary"
+                    disabled={isUpdatingStatus}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStatusTransition(order.order_id, "ACCEPTED");
@@ -152,6 +243,7 @@ export default function AdminOrdersPage() {
                   <Button
                     size="sm"
                     variant="primary"
+                    disabled={isUpdatingStatus}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStatusTransition(order.order_id, "PREPARING");
@@ -164,6 +256,7 @@ export default function AdminOrdersPage() {
                   <Button
                     size="sm"
                     variant="primary"
+                    disabled={isUpdatingStatus}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStatusTransition(order.order_id, "READY");
@@ -176,6 +269,7 @@ export default function AdminOrdersPage() {
                   <Button
                     size="sm"
                     variant="outline"
+                    disabled={isUpdatingStatus}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStatusTransition(order.order_id, "COMPLETED");
@@ -235,7 +329,7 @@ export default function AdminOrdersPage() {
               <span>{formatCurrency(selectedOrder.total)}</span>
             </div>
 
-            {/* Quick Status Action */}
+            {/* Quick Status Actions in Modal */}
             <div className="pt-3 flex gap-2">
               <Button
                 variant="outline"
@@ -256,6 +350,45 @@ export default function AdminOrdersPage() {
                   }
                 >
                   Accept Order
+                </Button>
+              )}
+              {selectedOrder.order_status === "ACCEPTED" && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={isUpdatingStatus}
+                  className="flex-1"
+                  onClick={() =>
+                    handleStatusTransition(selectedOrder.order_id, "PREPARING")
+                  }
+                >
+                  Start Preparing
+                </Button>
+              )}
+              {selectedOrder.order_status === "PREPARING" && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={isUpdatingStatus}
+                  className="flex-1"
+                  onClick={() =>
+                    handleStatusTransition(selectedOrder.order_id, "READY")
+                  }
+                >
+                  Mark Ready
+                </Button>
+              )}
+              {selectedOrder.order_status === "READY" && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={isUpdatingStatus}
+                  className="flex-1"
+                  onClick={() =>
+                    handleStatusTransition(selectedOrder.order_id, "COMPLETED")
+                  }
+                >
+                  Mark Completed
                 </Button>
               )}
             </div>

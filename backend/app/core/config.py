@@ -21,10 +21,14 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
-    # Cloudinary Image Storage (Optional placeholders)
+    # Cloudinary Image Storage
     CLOUDINARY_CLOUD_NAME: Optional[str] = None
     CLOUDINARY_API_KEY: Optional[str] = None
     CLOUDINARY_API_SECRET: Optional[str] = None
+
+    # Ably Real-Time Messaging
+    ABLY_API_KEY: Optional[str] = None
+    APP_DOMAIN: str = "yourdomain.com"
 
     model_config = SettingsConfigDict(
         env_file=".env",

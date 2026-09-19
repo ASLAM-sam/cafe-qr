@@ -45,11 +45,17 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
     setErrorMessage(null);
 
     try {
+      const idempotencyKey = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `ord_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
       const orderPayload = {
         table_id: tableToken || undefined,
+        table_token: tableToken || undefined,
         order_type: orderType,
         customer_name: customerName.trim() || undefined,
         customer_phone: customerPhone.trim() || undefined,
+        idempotency_key: idempotencyKey,
         items: items.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,

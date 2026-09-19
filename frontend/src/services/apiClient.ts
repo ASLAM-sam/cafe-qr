@@ -1,4 +1,4 @@
-import { Cafe, Category, Product, Order, Table } from "@/types";
+import { Cafe, Category, Product, Order, Table, User } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -22,7 +22,7 @@ async function request<T>(
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -75,10 +75,12 @@ export const customerService = {
     subdomain: string,
     orderData: {
       table_id?: string;
+      table_token?: string;
       order_type: "DINE_IN" | "TAKEAWAY";
       customer_name?: string;
       customer_phone?: string;
       items: { product_id: string; quantity: number }[];
+      idempotency_key?: string;
     }
   ) =>
     request<Order>(
@@ -90,8 +92,14 @@ export const customerService = {
       subdomain
     ),
 
-  getOrderStatus: (subdomain: string, orderId: string) =>
-    request<Order>(`/public/orders/${encodeURIComponent(orderId)}`, { method: "GET" }, subdomain),
+  getOrderStatus: (subdomain: string, orderReference: string) =>
+    request<Order>(`/public/orders/${encodeURIComponent(orderReference)}`, { method: "GET" }, subdomain),
+
+  getCustomerRealtimeToken: (orderReference: string) =>
+    request<{ tokenRequest: Record<string, unknown> }>(
+      `/realtime/customer-token/${encodeURIComponent(orderReference)}`,
+      { method: "GET" }
+    ),
 };
 
 /**
@@ -99,7 +107,7 @@ export const customerService = {
  */
 export const adminService = {
   login: (credentials: { email: string; password: string }) =>
-    request<{ success: boolean; user: { name: string; email: string; cafe_id: string } }>(
+    request<{ access_token: string; token_type: string; user: { name: string; email: string; cafe_id: string } }>(
       `/auth/login`,
       {
         method: "POST",
@@ -108,7 +116,19 @@ export const adminService = {
     ),
 
   logout: () =>
-    request<{ success: boolean }>(`/auth/logout`, { method: "POST" }),
+    request<{ success: boolean; message?: string }>(`/auth/logout`, { method: "POST" }),
+
+  getMe: () =>
+    request<{ user: User; cafe: Cafe }>(`/auth/me`, { method: "GET" }),
+
+  getCafe: () =>
+    request<Cafe>(`/cafe`, { method: "GET" }),
+
+  updateCafe: (data: Partial<Cafe>) =>
+    request<Cafe>(`/cafe`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 
   getDashboardStats: () =>
     request<{
@@ -119,14 +139,20 @@ export const adminService = {
       completed_orders: number;
     }>(`/admin/dashboard/stats`, { method: "GET" }),
 
-  getOrders: (status?: string) => {
-    const query = status && status !== "ALL" ? `?status=${encodeURIComponent(status)}` : "";
-    return request<Order[]>(`/admin/orders${query}`, { method: "GET" });
+  getOrders: (status?: string, limit: number = 50, skip: number = 0) => {
+    const params = new URLSearchParams();
+    if (status && status !== "ALL") params.append("status", status);
+    params.append("limit", limit.toString());
+    params.append("skip", skip.toString());
+    return request<Order[]>(`/admin/orders?${params.toString()}`, { method: "GET" });
   },
+
+  getOrderDetails: (orderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}`, { method: "GET" }),
 
   updateOrderStatus: (orderId: string, status: string) =>
     request<Order>(
-      `/admin/orders/${encodeURIComponent(orderId)}/status`,
+      `/orders/${encodeURIComponent(orderId)}/status`,
       {
         method: "PATCH",
         body: JSON.stringify({ status }),
@@ -136,9 +162,98 @@ export const adminService = {
   getCategories: () =>
     request<Category[]>(`/admin/categories`, { method: "GET" }),
 
-  getProducts: () =>
-    request<Product[]>(`/admin/products`, { method: "GET" }),
+  createCategory: (data: { name: string; description?: string; display_order?: number; is_active?: boolean }) =>
+    request<Category>(`/categories`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateCategory: (categoryId: string, data: Partial<Category>) =>
+    request<Category>(`/categories/${encodeURIComponent(categoryId)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteCategory: (categoryId: string) =>
+    request<{ success: boolean; message: string }>(`/categories/${encodeURIComponent(categoryId)}`, {
+      method: "DELETE",
+    }),
+
+  getProducts: (categoryId?: string) => {
+    const query = categoryId ? `?category_id=${encodeURIComponent(categoryId)}` : "";
+    return request<Product[]>(`/admin/products${query}`, { method: "GET" });
+  },
+
+  createProduct: (data: {
+    category_id: string;
+    name: string;
+    description?: string;
+    price: number;
+    image_url?: string;
+    image_public_id?: string;
+    is_available?: boolean;
+    display_order?: number;
+  }) =>
+    request<Product>(`/products`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateProduct: (productId: string, data: Partial<Product>) =>
+    request<Product>(`/products/${encodeURIComponent(productId)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteProduct: (productId: string) =>
+    request<{ success: boolean; message: string }>(`/products/${encodeURIComponent(productId)}`, {
+      method: "DELETE",
+    }),
+
+  uploadProductImage: (productId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<Product>(`/products/${encodeURIComponent(productId)}/image`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  standaloneUploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{ image_url: string; image_public_id: string; format: string; bytes: number }>(
+      `/products/upload-image`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+  },
 
   getTables: () =>
     request<Table[]>(`/admin/tables`, { method: "GET" }),
+
+  createTable: (data: { table_number: string }) =>
+    request<Table>(`/tables`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateTable: (tableId: string, data: { table_number?: string; status?: string }) =>
+    request<Table>(`/tables/${encodeURIComponent(tableId)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteTable: (tableId: string) =>
+    request<{ success: boolean; message: string }>(`/tables/${encodeURIComponent(tableId)}`, {
+      method: "DELETE",
+    }),
+
+  getTableQrUrl: (tableId: string) =>
+    `${API_BASE_URL}/tables/${encodeURIComponent(tableId)}/qr`,
+
+  getRealtimeToken: () =>
+    request<{ tokenRequest: Record<string, unknown> }>(`/realtime/token`, { method: "GET" }),
 };

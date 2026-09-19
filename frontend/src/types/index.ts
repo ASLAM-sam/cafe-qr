@@ -96,6 +96,7 @@ export interface OrderItem {
 export interface Order {
   order_id: string;
   order_number: string;
+  order_reference?: string;
   cafe_id: string;
   table_id?: string;
   table_number?: string;

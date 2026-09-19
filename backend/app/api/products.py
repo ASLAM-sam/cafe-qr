@@ -1,11 +1,12 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, UploadFile, File, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.dependencies import get_db, get_current_tenant_cafe, get_public_subdomain
 from app.repositories.product_repository import ProductRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.cafe_repository import CafeRepository
 from app.services.product_service import ProductService
+from app.services.cloudinary_service import cloudinary_service
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
 
 router = APIRouter(tags=["Products"])
@@ -91,13 +92,56 @@ async def update_product(
     return await service.update_product(current_cafe["cafe_id"], product_id, data.model_dump())
 
 
+@router.post("/api/products/{product_id}/image", response_model=ProductResponse)
+async def upload_product_image(
+    product_id: str,
+    file: UploadFile = File(...),
+    current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Authenticated café admin endpoint: upload or replace product image in Cloudinary.
+    Validates MIME type, extension, and file size.
+    """
+    file_bytes = await file.read()
+    product_repo = ProductRepository(db)
+    category_repo = CategoryRepository(db)
+    service = ProductService(product_repo, category_repo)
+    return await service.update_product_image(
+        cafe_id=current_cafe["cafe_id"],
+        product_id=product_id,
+        file_bytes=file_bytes,
+        content_type=file.content_type or "image/jpeg",
+        filename=file.filename or "product.jpg",
+    )
+
+
+@router.post("/api/products/upload-image")
+async def standalone_upload_product_image(
+    file: UploadFile = File(...),
+    current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
+):
+    """
+    Authenticated café admin endpoint: upload an image prior to product creation.
+    Returns image_url and image_public_id.
+    """
+    file_bytes = await file.read()
+    return await cloudinary_service.upload_image(
+        file_bytes=file_bytes,
+        cafe_id=current_cafe["cafe_id"],
+        content_type=file.content_type or "image/jpeg",
+        filename=file.filename or "product.jpg",
+        folder="products",
+    )
+
+
 @router.delete("/api/products/{product_id}")
 async def delete_product(
     product_id: str,
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: delete a product."""
+    """Authenticated café admin endpoint: delete a product and its Cloudinary asset."""
     product_repo = ProductRepository(db)
     category_repo = CategoryRepository(db)
     service = ProductService(product_repo, category_repo)
