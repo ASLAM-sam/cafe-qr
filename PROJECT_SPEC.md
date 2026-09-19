@@ -265,11 +265,7 @@ All cafés use the same application/codebase.
 
 ## Payments
 
-Payment integration can use:
-
-**Razorpay**
-
-Payment implementation is not required for the first development stage unless explicitly selected.
+Online payment gateways (such as Razorpay) are intentionally removed from scope. The platform operates on direct café-to-customer ordering with pay-at-counter or pay-on-delivery managed by the café.
 
 ---
 
@@ -1562,8 +1558,6 @@ JWT_SECRET=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-RAZORPAY_KEY_ID=
-RAZORPAY_KEY_SECRET=
 ```
 
 Secrets must only exist in secure environment variables.
@@ -2324,19 +2318,11 @@ Status:
 
 ---
 
-# PHASE 12 — PAYMENTS
+# PHASE 12 — PAYMENTS (REMOVED FROM SCOPE)
 
 Status:
 
-⬜ Razorpay integration
-
-⬜ Payment creation
-
-⬜ Payment verification
-
-⬜ Payment success
-
-⬜ Payment failure
+Online payment gateways (including Razorpay) are intentionally removed from scope. Ordering proceeds directly from customer cart to confirmed order without third-party payment gateway dependencies.
 
 ⬜ Payment status
 
@@ -2704,8 +2690,7 @@ The intended architecture is:
                                         |
                               ┌─────────┴─────────┐
                               |                   |
-                           Cloudinary          Payments
-                                               Razorpay
+                            Cloudinary            Ably
 ```
 
 ---
@@ -2806,7 +2791,6 @@ Build in this order:
 18. 🟡 Production deployment (Vercel serverless configuration prepared)
 19. ⬜ Platform admin
 20. ⬜ Automated café onboarding
-21. ⬜ Razorpay/payment integration
 ```
 
 Do not jump randomly between phases.

@@ -5,6 +5,15 @@ from app.core.dependencies import get_db
 router = APIRouter(tags=["Health"])
 
 
+@router.get("/")
+async def root():
+    """Root status endpoint reporting API availability."""
+    return {
+        "service": "Cafe QR Ordering API",
+        "status": "ok",
+    }
+
+
 @router.get("/health")
 async def health_check(db: AsyncIOMotorDatabase = Depends(get_db)):
     """Healthcheck endpoint reporting application and database connectivity."""
