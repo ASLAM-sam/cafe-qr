@@ -164,20 +164,91 @@ Follow this 16-step checklist to verify production health once live credentials 
 
 ---
 
-## 10. External Service Status
+## 10. Database Indexes & Verification
+
+The application automatically creates and verifies indexes on startup via `create_indexes()` in `backend/app/core/database.py`:
+
+| Collection | Index Fields | Properties | Purpose |
+|---|---|---|---|
+| `cafes` | `subdomain` (ASC) | Unique | Fast tenant resolution by subdomain |
+| `cafes` | `cafe_id` (ASC) | Unique | Fast lookup and primary tenant key |
+| `users` | `email` (ASC) | Unique | Uniqueness constraint on user accounts |
+| `users` | `cafe_id` (ASC) | Standard | Fast user lookup per tenant |
+| `categories` | `cafe_id` (ASC) | Standard | Multi-tenant category queries |
+| `categories` | `cafe_id` + `name` (ASC) | Standard | Category lookup and duplicate prevention |
+| `categories` | `cafe_id` + `display_order` (ASC) | Standard | Ordered category menu queries |
+| `products` | `cafe_id` (ASC) | Standard | Multi-tenant product queries |
+| `products` | `cafe_id` + `category_id` (ASC) | Standard | Filter products by category |
+| `products` | `cafe_id` + `is_available` (ASC) | Standard | Filter available menu items |
+| `tables` | `cafe_id` + `table_number` (ASC) | Unique | Prevent duplicate table numbers within café |
+| `tables` | `qr_token` (ASC) | Unique | Fast, cryptographically secure QR table resolution |
+| `tables` | `cafe_id` (ASC) | Standard | Multi-tenant table queries |
+| `orders` | `cafe_id` (ASC) | Standard | Multi-tenant order queries |
+| `orders` | `cafe_id` + `order_status` (ASC) | Standard | Filter active/pending/completed orders |
+| `orders` | `cafe_id` + `created_at` (ASC) | Standard | Chronological order history queries |
+| `orders` | `order_reference` (ASC) | Unique | Secure unguessable order tracking lookup |
+| `orders` | `cafe_id` + `idempotency_key` (ASC) | Sparse | Prevent duplicate order submission |
+
+---
+
+## 11. CORS & Hostname Security Configuration
+
+The FastAPI backend dynamically computes CORS origins based on `APP_DOMAIN` and `ENVIRONMENT`:
+
+- **Development (`ENVIRONMENT=development`)**:
+  - `cors_origin_regex = r"^https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1)(:[0-9]+)?$"`
+  - Allows `localhost:3000`, `127.0.0.1:3000`, `cafe1.localhost:3000`, etc.
+- **Production (`ENVIRONMENT=production`)**:
+  - `cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)?{re.escape(clean_domain)}$"`
+  - Allows `https://yourdomain.com` and all subdomains `https://*.yourdomain.com`.
+  - Rejects untrusted third-party domains (e.g., `attacker.com`).
+
+---
+
+## 12. Troubleshooting Guide
+
+### Issue 1: CORS Error on Subdomain API Calls
+- **Symptom:** Browser blocks fetch request with `No 'Access-Control-Allow-Origin' header is present`.
+- **Cause:** `APP_DOMAIN` in backend environment does not match the apex domain (e.g. `APP_DOMAIN` set to `localhost` in production).
+- **Fix:** Ensure backend Vercel project has `APP_DOMAIN=yourdomain.com` (without `https://` and without port). Ensure `ENVIRONMENT=production`.
+
+### Issue 2: MongoDB Connection Timeout (`ServerSelectionTimeoutError`)
+- **Symptom:** Backend returns 500 or health check reports `"database": "unreachable"`.
+- **Cause:** Atlas Network Access IP whitelist is blocking Vercel serverless functions.
+- **Fix:** In MongoDB Atlas > Network Access, add `0.0.0.0/0` (Allow Access from Anywhere) and verify database user credentials in `MONGODB_URI`.
+
+### Issue 3: Subdomain Not Resolving to Café Menu
+- **Symptom:** `cafe1.yourdomain.com` shows Platform Landing Page instead of Café Menu.
+- **Cause:** `NEXT_PUBLIC_DOMAIN` in frontend environment is missing or does not match `yourdomain.com`.
+- **Fix:** Set `NEXT_PUBLIC_DOMAIN=yourdomain.com` in frontend Vercel project settings and redeploy.
+
+### Issue 4: Cloudinary Upload Fails (HTTP 502 / 503)
+- **Symptom:** Uploading product image returns `Cloudinary image service is not configured` or `Failed to upload image`.
+- **Cause:** Missing or incorrect `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, or `CLOUDINARY_API_SECRET` in backend Vercel project.
+- **Fix:** Check backend Vercel environment variables and verify credentials in Cloudinary dashboard.
+
+### Issue 5: Real-time Order Events Not Received in Admin
+- **Symptom:** Café Admin `/orders` page requires manual refresh to see new orders.
+- **Cause:** `ABLY_API_KEY` is missing or invalid in backend, preventing token generation or publishing.
+- **Fix:** Set valid `ABLY_API_KEY` in backend Vercel project. Check browser DevTools network tab for `/api/realtime/token` response.
+
+---
+
+## 13. External Service Status
 
 | Service | Status | Verification Detail |
 |---|---|---|
 | **Code Implementation** | `CODE VERIFIED` | Next.js build passed (0 errors), 35 backend tests passed (100%), full end-to-end typing. |
-| **MongoDB Atlas** | `CODE VERIFIED` | Connection handling, multi-tenant queries, and compound indexes configured and verified. |
-| **Cloudinary** | `PENDING CREDENTIALS` | Service abstraction, MIME/size validation, replacement, and deletion code verified. Live upload pending user credentials. |
-| **Ably Realtime** | `PENDING CREDENTIALS` | Scoped token generation, channel subscriptions, reconnect reconciliation, and fallbacks code verified. Live stream pending user credentials. |
-| **Vercel Deployment** | `PENDING USER ACTION` | `vercel.json` configured for backend; frontend configured for App Router and Turbopack. |
-| **Custom Domain & DNS** | `PENDING USER ACTION` | Hostname parsing and wildcard regex verified. A and CNAME records must be configured in DNS by user. |
+| **MongoDB Atlas** | `CODE VERIFIED` | Connection handling, multi-tenant queries, and compound indexes configured and verified. Live connection pending production URI. |
+| **Cloudinary** | `CODE VERIFIED` | Service abstraction, MIME/size validation, replacement, and deletion code verified. Live upload pending user credentials. |
+| **Ably Realtime** | `CODE VERIFIED` | Scoped token generation, channel subscriptions, reconnect reconciliation, and fallbacks code verified. Live stream pending user credentials. |
+| **Vercel Frontend** | `CODE VERIFIED` | App Router, Turbopack, and dynamic proxy routing verified via `npm run build`. Live deployment pending user action. |
+| **Vercel Backend** | `CODE VERIFIED` | `vercel.json` configured for `@vercel/python`, entrypoint `app/main.py` verified. Live deployment pending user action. |
+| **Custom Domain & DNS** | `CODE VERIFIED` | Hostname parsing and wildcard regex verified. A and CNAME records must be configured in DNS by user. |
 
 ---
 
-## 11. Security Checklist
+## 14. Security Checklist
 
 - [x] Zero secrets committed to Git (`.gitignore` covers `.env`, `.env.local`, `backend/.env`).
 - [x] `CLOUDINARY_API_SECRET`, `ABLY_API_KEY`, `MONGODB_URI`, and `JWT_SECRET` are backend-only.
@@ -188,3 +259,4 @@ Follow this 16-step checklist to verify production health once live credentials 
 - [x] Order references use unguessable tokens preventing enumeration.
 - [x] Public endpoints have sliding-window rate limiting.
 - [x] Production security headers injected on frontend and backend responses.
+
