@@ -36,14 +36,35 @@ app = FastAPI(
 )
 
 # CORS Configuration
+# Secure origin regex allowing dynamic cafe subdomains (*.mydomain.com)
+clean_domain = settings.APP_DOMAIN.split(":")[0].strip().lower()
+if settings.ENVIRONMENT == "development":
+    cors_origin_regex = r"^https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1)(:[0-9]+)?$"
+else:
+    import re
+    cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)?{re.escape(clean_domain)}$"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Tenant-Subdomain"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Inject production security headers on all responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
 
 # Global Exception Handlers
 @app.exception_handler(RequestValidationError)

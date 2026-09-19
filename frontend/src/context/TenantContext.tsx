@@ -20,32 +20,68 @@ export function resolveTenantFromHost(hostname: string, searchParams?: URLSearch
   subdomain: string | null;
   isPlatform: boolean;
 } {
+  const SUBDOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+  const RESERVED_SUBDOMAINS = new Set(["www", "app", "platform", "api", "admin", "mail", "smtp", "cdn", "static"]);
+
   // Query param override (useful for dev and testing: ?cafe=slug)
   const paramCafe = searchParams?.get("cafe");
   if (paramCafe) {
-    return { subdomain: paramCafe.toLowerCase().trim(), isPlatform: false };
+    const candidate = paramCafe.toLowerCase().trim();
+    if (SUBDOMAIN_REGEX.test(candidate) && !RESERVED_SUBDOMAINS.has(candidate)) {
+      return { subdomain: candidate, isPlatform: false };
+    }
   }
 
-  // Handle localhost: e.g. "brewhouse.localhost" vs "localhost"
-  const cleanHost = hostname.split(":")[0].toLowerCase();
+  const cleanHost = hostname.split(":")[0].toLowerCase().trim();
+  const configuredDomain = (process.env.NEXT_PUBLIC_DOMAIN || "").split(":")[0].toLowerCase().trim();
+
+  // Local development
   if (cleanHost === "localhost" || cleanHost === "127.0.0.1") {
     return { subdomain: null, isPlatform: true };
   }
 
+  if (cleanHost.endsWith(".localhost")) {
+    const candidate = cleanHost.replace(/\.localhost$/, "");
+    if (SUBDOMAIN_REGEX.test(candidate) && !RESERVED_SUBDOMAINS.has(candidate)) {
+      return { subdomain: candidate, isPlatform: false };
+    }
+    return { subdomain: null, isPlatform: true };
+  }
+
+  // Configured production domain
+  if (configuredDomain && (cleanHost === configuredDomain || cleanHost === `www.${configuredDomain}`)) {
+    return { subdomain: null, isPlatform: true };
+  }
+
+  if (configuredDomain && cleanHost.endsWith("." + configuredDomain)) {
+    const candidate = cleanHost.slice(0, -(configuredDomain.length + 1));
+    if (SUBDOMAIN_REGEX.test(candidate) && !RESERVED_SUBDOMAINS.has(candidate)) {
+      return { subdomain: candidate, isPlatform: false };
+    }
+    return { subdomain: null, isPlatform: true };
+  }
+
+  // Vercel deployment preview / app domain
+  if (cleanHost.endsWith(".vercel.app")) {
+    const parts = cleanHost.split(".");
+    if (parts.length > 3) {
+      const candidate = parts[0];
+      if (SUBDOMAIN_REGEX.test(candidate) && !RESERVED_SUBDOMAINS.has(candidate)) {
+        return { subdomain: candidate, isPlatform: false };
+      }
+    }
+    return { subdomain: null, isPlatform: true };
+  }
+
+  // Generic 3-part domain fallback
   const parts = cleanHost.split(".");
-
-  // e.g. "brewhouse.localhost" -> parts = ["brewhouse", "localhost"]
-  if (parts.length === 2 && parts[1] === "localhost") {
-    return { subdomain: parts[0], isPlatform: false };
+  if (parts.length > 2) {
+    const candidate = parts[0];
+    if (SUBDOMAIN_REGEX.test(candidate) && !RESERVED_SUBDOMAINS.has(candidate)) {
+      return { subdomain: candidate, isPlatform: false };
+    }
   }
 
-  // e.g. "brewhouse.yourdomain.com" -> parts = ["brewhouse", "yourdomain", "com"]
-  // e.g. "brewhouse.cafe-qr.vercel.app" -> parts = ["brewhouse", "cafe-qr", "vercel", "app"]
-  if (parts.length > 2 && parts[0] !== "www" && parts[0] !== "app" && parts[0] !== "platform") {
-    return { subdomain: parts[0], isPlatform: false };
-  }
-
-  // Root platform domain: e.g. "yourdomain.com", "www.yourdomain.com", "cafe-qr.vercel.app"
   return { subdomain: null, isPlatform: true };
 }
 

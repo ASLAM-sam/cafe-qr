@@ -1,8 +1,9 @@
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.dependencies import get_db, get_current_user
 from app.core.config import settings
+from app.core.rate_limit import login_rate_limiter
 from app.repositories.user_repository import UserRepository
 from app.repositories.cafe_repository import CafeRepository
 from app.services.auth_service import AuthService
@@ -15,9 +16,11 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 async def login(
     credentials: LoginRequest,
     response: Response,
+    request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Authenticate café owner/manager and establish session."""
+    login_rate_limiter.check(request)
     user_repo = UserRepository(db)
     cafe_repo = CafeRepository(db)
     auth_service = AuthService(user_repo, cafe_repo)

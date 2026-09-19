@@ -1,7 +1,8 @@
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.dependencies import get_db, get_current_tenant_cafe
+from app.core.rate_limit import public_rate_limiter
 from app.repositories.table_repository import TableRepository
 from app.repositories.cafe_repository import CafeRepository
 from app.services.table_service import TableService
@@ -13,9 +14,11 @@ router = APIRouter(tags=["Tables"])
 @router.get("/api/public/table/{qr_token}")
 async def resolve_table(
     qr_token: str,
+    request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Public customer endpoint: look up a dining table by its scanned QR token."""
+    public_rate_limiter.check(request)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)

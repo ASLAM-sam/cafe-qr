@@ -50,6 +50,9 @@ class CafeService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Café not found.")
         return updated
 
+    async def list_all_cafes(self, limit: int = 100, skip: int = 0) -> list[Dict[str, Any]]:
+        return await self.cafe_repo.get_all(limit=limit, skip=skip)
+
     async def create_cafe_and_owner(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Bootstrap a new café and owner account (Platform admin)."""
         subdomain = normalize_subdomain(data["subdomain"])

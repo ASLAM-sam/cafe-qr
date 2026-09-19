@@ -24,6 +24,10 @@ class CafeRepository:
         cafe_data.pop("_id", None)
         return cafe_data
 
+    async def get_all(self, limit: int = 100, skip: int = 0) -> list[Dict[str, Any]]:
+        cursor = self.collection.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+        return await cursor.to_list(length=limit)
+
     async def update(self, cafe_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         update_data["updated_at"] = datetime.now(timezone.utc)
         result = await self.collection.find_one_and_update(

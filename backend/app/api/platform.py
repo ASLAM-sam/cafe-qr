@@ -9,6 +9,21 @@ from app.schemas.cafe import CafeCreate
 router = APIRouter(prefix="/api/platform", tags=["Platform Admin"])
 
 
+@router.get("/cafes")
+async def platform_list_cafes(
+    _admin=Depends(require_platform_admin),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Platform Admin endpoint: List all registered café tenants across the platform.
+    Requires PLATFORM_ADMIN role.
+    """
+    cafe_repo = CafeRepository(db)
+    user_repo = UserRepository(db)
+    service = CafeService(cafe_repo, user_repo)
+    return await service.list_all_cafes()
+
+
 @router.post("/cafes", status_code=status.HTTP_201_CREATED)
 async def platform_create_cafe(
     data: CafeCreate,
@@ -23,3 +38,4 @@ async def platform_create_cafe(
     user_repo = UserRepository(db)
     service = CafeService(cafe_repo, user_repo)
     return await service.create_cafe_and_owner(data.model_dump())
+

@@ -1,7 +1,8 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.dependencies import get_db, get_current_tenant_cafe, get_public_subdomain
+from app.core.rate_limit import order_rate_limiter
 from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.table_repository import TableRepository
@@ -15,6 +16,7 @@ router = APIRouter(tags=["Orders"])
 @router.post("/api/public/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_customer_order(
     data: OrderCreateRequest,
+    request: Request,
     subdomain: str = Depends(get_public_subdomain),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
@@ -22,6 +24,7 @@ async def create_customer_order(
     Public customer endpoint: place an order.
     The backend computes all prices, subtotals, and taxes authoritative from database.
     """
+    order_rate_limiter.check(request)
     cafe_repo = CafeRepository(db)
     cafe = await cafe_repo.get_by_subdomain(subdomain)
     if not cafe:

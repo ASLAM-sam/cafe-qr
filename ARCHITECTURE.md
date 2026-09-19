@@ -105,4 +105,8 @@ This document outlines the end-to-end production architecture of the **Café QR 
 | **Pricing & Taxes** | Calculated authoritatively on backend from MongoDB; client totals ignored | Tampered client prices overwritten |
 | **Order Idempotency** | `idempotency_key` unique index and retrieval check | Duplicate order creation rejected |
 | **Image Uploads** | Server-side MIME/magic byte inspection + 5MB size limit | HTTP 400 Bad Request |
+| **Rate Limiting** | Sliding-window in-memory limiter on `/auth/login`, `/public/orders`, `/public/table/{token}` | HTTP 429 Too Many Requests |
+| **HTTP Security** | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `X-XSS-Protection` | Enforced at middleware layer |
+| **Subdomain Security** | RFC 1123 label regex + reserved words filter against configured domain | Arbitrary/attacker hostnames rejected |
 | **Secrets** | Zero private credentials in `NEXT_PUBLIC_*` or git | Strictly enforced in `.gitignore` |
+

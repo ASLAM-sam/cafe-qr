@@ -53,51 +53,20 @@ export function PlatformAdminDashboard() {
     description: "",
   });
 
-  // Load registered cafes
+  // Load registered cafes from real backend API
   const loadCafes = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      // In production/platform, this fetches from the platform admin endpoint.
-      // We also check existing known demo tenants so the platform admin displays active tenants.
-      const initialTenants: ManagedCafe[] = [
-        {
-          cafe_id: "cafe_001",
-          name: "Brew House Roastery",
-          subdomain: "brewhouse",
-          owner_name: "Ahmed Owner",
-          owner_email: "owner_a@brewhouse.com",
-          currency: "INR",
-          status: "ACTIVE",
-          created_at: new Date().toISOString(),
-        },
-        {
-          cafe_id: "cafe_002",
-          name: "Mocha Café & Lounge",
-          subdomain: "mochacafe",
-          owner_name: "Mocha Owner",
-          owner_email: "owner_b@mochacafe.com",
-          currency: "INR",
-          status: "ACTIVE",
-          created_at: new Date().toISOString(),
-        },
-      ];
-
-      // Check localStorage for any newly onboarded cafes from this browser session
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("platform_onboarded_cafes");
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-              initialTenants.push(...parsed);
-            }
-          } catch {
-            // Ignore parse errors
-          }
-        }
+      const response = await fetch("/api/platform/cafes", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCafes(Array.isArray(data) ? data : []);
+      } else {
+        setCafes([]);
       }
-
-      setCafes(initialTenants);
     } catch {
       setCafes([]);
     } finally {

@@ -1,7 +1,9 @@
+import re
 from typing import Optional, Dict, Any
 from fastapi import Depends, HTTPException, Header, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.core.config import settings
 from app.core.database import get_database
 from app.core.security import decode_access_token
 from app.repositories.user_repository import UserRepository
@@ -86,6 +88,10 @@ async def get_current_tenant_cafe(
     return cafe
 
 
+SUBDOMAIN_REGEX = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+RESERVED_SUBDOMAINS = {"www", "app", "platform", "api", "admin", "mail", "smtp", "cdn", "static"}
+
+
 async def get_public_subdomain(
     request: Request,
     x_tenant_subdomain: Optional[str] = Header(None, alias="X-Tenant-Subdomain"),
@@ -93,26 +99,44 @@ async def get_public_subdomain(
     """
     Resolves the café subdomain for public customer queries.
     Sources:
-    1. Custom Header: X-Tenant-Subdomain
-    2. Host header subdomain (e.g. brewhouse.ourplatform.com)
-    3. Query parameter ?cafe= or ?subdomain=
+    1. Custom Header: X-Tenant-Subdomain (sent by frontend middleware/proxy)
+    2. Query parameter ?cafe= or ?subdomain=
+    3. Host header subdomain (e.g. brewhouse.yourdomain.com)
     """
+    candidate: Optional[str] = None
+
     if x_tenant_subdomain and x_tenant_subdomain.strip():
-        return x_tenant_subdomain.strip().lower()
+        candidate = x_tenant_subdomain.strip().lower()
+    elif request.query_params.get("subdomain"):
+        candidate = request.query_params["subdomain"].strip().lower()
+    elif request.query_params.get("cafe"):
+        candidate = request.query_params["cafe"].strip().lower()
+    else:
+        # Host header parsing
+        host = request.headers.get("host", "").split(":")[0].strip().lower()
+        clean_app_domain = settings.APP_DOMAIN.split(":")[0].strip().lower()
 
-    # Query param fallback
-    query_sub = request.query_params.get("subdomain") or request.query_params.get("cafe")
-    if query_sub and query_sub.strip():
-        return query_sub.strip().lower()
+        if host.endswith(f".{clean_app_domain}"):
+            candidate = host[: -(len(clean_app_domain) + 1)]
+        elif host.endswith(".localhost"):
+            candidate = host.replace(".localhost", "")
+        else:
+            parts = host.split(".")
+            if len(parts) > 2 and parts[0] not in RESERVED_SUBDOMAINS:
+                candidate = parts[0]
 
-    # Host header parsing
-    host = request.headers.get("host", "").split(":")[0]
-    parts = host.split(".")
-    if len(parts) > 2 and parts[0] != "www":
-        return parts[0].lower()
+    if candidate and SUBDOMAIN_REGEX.match(candidate) and candidate not in RESERVED_SUBDOMAINS:
+        return candidate
 
-    # Fallback to 'brewhouse' for local test development
-    return "brewhouse"
+    # In development/test environments, allow default fallback for local dev simplicity
+    if settings.ENVIRONMENT == "development":
+        return "brewhouse"
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="A valid café tenant subdomain is required.",
+    )
+
 
 
 def require_platform_admin(

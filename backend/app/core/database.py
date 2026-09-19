@@ -85,12 +85,13 @@ async def create_indexes():
             IndexModel([("cafe_id", ASCENDING)], name="idx_table_cafe"),
         ])
 
-        # Orders: cafe_id + order_status, created_at, order_reference (unique)
+        # Orders: cafe_id + order_status, created_at, order_reference (unique), idempotency_key
         await db_state.db.orders.create_indexes([
             IndexModel([("cafe_id", ASCENDING)], name="idx_order_cafe"),
             IndexModel([("cafe_id", ASCENDING), ("order_status", ASCENDING)], name="idx_order_status"),
             IndexModel([("cafe_id", ASCENDING), ("created_at", ASCENDING)], name="idx_order_created"),
             IndexModel([("order_reference", ASCENDING)], unique=True, name="idx_order_ref"),
+            IndexModel([("cafe_id", ASCENDING), ("idempotency_key", ASCENDING)], sparse=True, name="idx_order_idempotency"),
         ])
         logger.info("Ensured all MongoDB multi-tenant indexes.")
     except Exception as e:

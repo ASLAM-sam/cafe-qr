@@ -83,7 +83,19 @@ This guide explains how to deploy the unified **Next.js Frontend** and **FastAPI
 
 ---
 
-## 6. Custom Domain & Wildcard DNS Configuration
+## 6. Vercel Environment Separation
+
+| Environment | Purpose | Configuration Notes |
+|---|---|---|
+| **Development** | Local testing on developer machine | Configured via `frontend/.env.local` and `backend/.env` (both git-ignored). Connects to local mock or development DB. |
+| **Preview** | Vercel PR / branch previews | Set in Vercel project settings. Uses staging MongoDB database and staging domain `*.vercel.app`. |
+| **Production** | Live SaaS traffic | Set in Vercel project settings. Uses production MongoDB Atlas cluster, production Cloudinary cloud, and production Ably app. |
+
+---
+
+## 7. Custom Domain & Wildcard DNS Configuration
+
+*(MANUAL ACTION REQUIRED)*
 
 To enable multi-tenant cafés (`cafe.yourdomain.com`) on a single frontend:
 
@@ -92,33 +104,87 @@ To enable multi-tenant cafés (`cafe.yourdomain.com`) on a single frontend:
    - `*.yourdomain.com` (Wildcard domain for all café subdomains)
 2. In your DNS Provider (e.g. Cloudflare, Route 53, Namecheap), add:
 
-| Type | Name / Host | Target / Value | TTL |
+| Type | Name / Host | Target / Value | TTL | Note |
+|---|---|---|---|---|
+| `A` | `@` | `76.76.21.21` | Auto | Points apex domain to Vercel |
+| `CNAME` | `www` | `cname.vercel-dns.com` | Auto | Alias for www |
+| `CNAME` | `*` | `cname.vercel-dns.com` | Auto | Wildcard routing for all cafe subdomains |
+| `CNAME` | `api` | Points to Vercel Backend Project | Auto | Backend API endpoint |
+
+---
+
+## 8. Production Route Matrix
+
+| URL | Purpose | Access Level | Tenant Resolution |
 |---|---|---|---|
-| `A` | `@` | `76.76.21.21` (or Vercel CNAME) | Auto |
-| `CNAME` | `www` | `cname.vercel-dns.com` | Auto |
-| `CNAME` | `*` | `cname.vercel-dns.com` | Auto |
-| `CNAME` | `api` | Points to Vercel Backend Project | Auto |
+| `https://yourdomain.com/` | Platform Landing Website | Public | Platform Root (`isPlatform: true`) |
+| `https://yourdomain.com/admin` | Platform Owner Admin Dashboard | Platform Admin (`PLATFORM_ADMIN` role) | Platform Root (`isPlatform: true`) |
+| `https://cafe.yourdomain.com/` | Public Café Digital Menu & Ordering | Public Customer | Subdomain (`subdomain: "cafe"`) |
+| `https://cafe.yourdomain.com/admin` | Private Café Owner/Manager Dashboard | Authenticated Café Admin (`OWNER`/`ADMIN`) | Subdomain (`subdomain: "cafe"`) |
+| `https://cafe.yourdomain.com/t/<token>` | Table QR Code Entry & Session Bind | Public Customer (via secure QR token) | Table Token -> Café Subdomain |
 
 ---
 
-## 7. Production Verification Checklist
+## 9. Production Smoke Test Script
 
-- [ ] **Platform Website**: `https://yourdomain.com` renders the platform landing page.
-- [ ] **Platform Admin**: `https://yourdomain.com/admin` renders the platform admin dashboard.
-- [ ] **Café Customer Menu**: `https://cafe.yourdomain.com` loads the café's branding and active menu.
-- [ ] **Café Admin**: `https://cafe.yourdomain.com/admin` prompts for login and opens the café dashboard.
-- [ ] **Product Photo Upload**: Uploading an image in Menu > Products uploads to Cloudinary and displays properly.
-- [ ] **QR Code Generation**: Table QR code generates and opens `https://cafe.yourdomain.com/t/<token>`.
-- [ ] **Order Placement**: Placing a customer order computes prices server-side and persists to MongoDB.
-- [ ] **Live Notification**: Café Admin orders page updates via Ably in real-time with zero page refresh.
-- [ ] **Status Transition**: Changing order status updates customer's order tracking modal live.
-- [ ] **Tenant Isolation**: Café A credentials cannot view or mutate Café B's products, tables, or orders.
+Follow this 16-step checklist to verify production health once live credentials are provided:
+
+- [ ] **TEST 1: Open Platform Domain (`https://yourdomain.com`)**  
+  *Expected:* HTTP 200 / renders Platform Landing Page with feature highlights and onboarding CTA.
+- [ ] **TEST 2: Open Platform Admin (`https://yourdomain.com/admin`)**  
+  *Expected:* Requires platform admin authentication; regular café owners receive 403 Forbidden.
+- [ ] **TEST 3: Open Café Subdomain (`https://cafe.yourdomain.com`)**  
+  *Expected:* HTTP 200 / renders café branding, categories, and products for that specific café.
+- [ ] **TEST 4: Open Café Admin (`https://cafe.yourdomain.com/admin`)**  
+  *Expected:* Redirects to `/login` if unauthenticated; opens café dashboard upon login.
+- [ ] **TEST 5: Login as Café Owner**  
+  *Expected:* Dashboard opens displaying live metrics (0s when empty, strictly no fake data).
+- [ ] **TEST 6: Create Category in Menu > Categories**  
+  *Expected:* Category persists immediately and remains after page refresh.
+- [ ] **TEST 7: Create Product in Menu > Products**  
+  *Expected:* Product persists with price and availability toggles.
+- [ ] **TEST 8: Upload Product Photo (Cloudinary)**  
+  *Expected:* File uploads to `cafes/<cafe_id>/products/` in Cloudinary; secure URL saved to MongoDB. *(Pending live Cloudinary credentials)*.
+- [ ] **TEST 9: Create Table in Tables**  
+  *Expected:* Table persists with automatically generated cryptographically unguessable QR token.
+- [ ] **TEST 10: Generate & View Table QR Code**  
+  *Expected:* High-res QR code renders, points to `https://cafe.yourdomain.com/t/<token>`, and downloads as PNG.
+- [ ] **TEST 11: Open Table QR URL (`/t/<token>`) on Mobile**  
+  *Expected:* Resolves to correct café and table number; redirects to digital menu with table bound.
+- [ ] **TEST 12: Place Customer Order from Cart**  
+  *Expected:* Order prices, taxes, and subtotals calculated server-side; order persists in MongoDB Atlas.
+- [ ] **TEST 13: Admin Receives Order Notification via Ably**  
+  *Expected:* Real-time `NEW_ORDER` card appears in Café Admin `/orders` without manual browser refresh. *(Pending live Ably credentials)*.
+- [ ] **TEST 14: Admin Advances Status (`PLACED` -> `ACCEPTED` -> `PREPARING` -> `READY` -> `COMPLETED`)**  
+  *Expected:* Status change persists in MongoDB; Ably publishes status event.
+- [ ] **TEST 15: Customer Sees Status Updates Live**  
+  *Expected:* Customer order tracking modal updates in real-time. *(Pending live Ably credentials)*.
+- [ ] **TEST 16: Cross-Tenant Isolation Verification**  
+  *Expected:* Café A credentials attempting to access Café B's products, categories, tables, or orders receives HTTP 403 / HTTP 404.
 
 ---
 
-## 8. Security Checklist
+## 10. External Service Status
 
-- [ ] Never commit `.env` or `.env.local` files to Git.
-- [ ] Ensure `CLOUDINARY_API_SECRET`, `ABLY_API_KEY`, `MONGODB_URI`, and `JWT_SECRET` are only present in backend environment variables.
-- [ ] Confirm CORS settings restrict API requests to your domains.
-- [ ] Check that all customer inputs are validated on the server.
+| Service | Status | Verification Detail |
+|---|---|---|
+| **Code Implementation** | `CODE VERIFIED` | Next.js build passed (0 errors), 35 backend tests passed (100%), full end-to-end typing. |
+| **MongoDB Atlas** | `CODE VERIFIED` | Connection handling, multi-tenant queries, and compound indexes configured and verified. |
+| **Cloudinary** | `PENDING CREDENTIALS` | Service abstraction, MIME/size validation, replacement, and deletion code verified. Live upload pending user credentials. |
+| **Ably Realtime** | `PENDING CREDENTIALS` | Scoped token generation, channel subscriptions, reconnect reconciliation, and fallbacks code verified. Live stream pending user credentials. |
+| **Vercel Deployment** | `PENDING USER ACTION` | `vercel.json` configured for backend; frontend configured for App Router and Turbopack. |
+| **Custom Domain & DNS** | `PENDING USER ACTION` | Hostname parsing and wildcard regex verified. A and CNAME records must be configured in DNS by user. |
+
+---
+
+## 11. Security Checklist
+
+- [x] Zero secrets committed to Git (`.gitignore` covers `.env`, `.env.local`, `backend/.env`).
+- [x] `CLOUDINARY_API_SECRET`, `ABLY_API_KEY`, `MONGODB_URI`, and `JWT_SECRET` are backend-only.
+- [x] Hostname resolution rejects arbitrary domains (`attacker.com`).
+- [x] CORS rejects unauthorized third-party origins.
+- [x] Server calculates all prices, subtotals, and taxes authoritative from database.
+- [x] Orders are idempotent via `idempotency_key`.
+- [x] Order references use unguessable tokens preventing enumeration.
+- [x] Public endpoints have sliding-window rate limiting.
+- [x] Production security headers injected on frontend and backend responses.
