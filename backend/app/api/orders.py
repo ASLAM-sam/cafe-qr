@@ -56,7 +56,12 @@ async def create_customer_order(
         addon_repo=addon_repo,
     )
 
-    return await service.create_order(cafe["cafe_id"], data.model_dump())
+    payload = data.model_dump()
+    header_idem_key = request.headers.get("idempotency-key") or request.headers.get("Idempotency-Key")
+    if not payload.get("idempotency_key") and header_idem_key:
+        payload["idempotency_key"] = header_idem_key
+
+    return await service.create_order(cafe["cafe_id"], payload)
 
 
 @router.get("/api/public/orders/{order_reference}", response_model=OrderResponse)
