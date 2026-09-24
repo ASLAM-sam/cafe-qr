@@ -15,6 +15,7 @@ async def root():
 
 
 @router.get("/health")
+@router.get("/api/health")
 async def health_check(db: AsyncIOMotorDatabase = Depends(get_db)):
     """Healthcheck endpoint reporting application and database connectivity."""
     db_status = "disconnected"

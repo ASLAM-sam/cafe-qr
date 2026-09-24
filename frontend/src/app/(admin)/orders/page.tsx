@@ -309,7 +309,7 @@ export default function AdminOrdersPage() {
                         </div>
                         {item.addons && item.addons.length > 0 && (
                           <div className="text-[10px] text-[oklch(0.85_0.15_305)] pl-4 truncate mt-0.5">
-                            {item.addons.map((a) => `+ ${a.addon_item_name || (a as Record<string, unknown>).name || ""}`).join(", ")}
+                            {item.addons.map((a) => `+ ${a.addon_item_name}`).join(", ")}
                           </div>
                         )}
                       </div>
@@ -530,7 +530,7 @@ export default function AdminOrdersPage() {
                               {item.addons.map((a, aIdx) => (
                                 <div key={aIdx} className="flex items-center gap-1.5">
                                   <span className="text-white/40">•</span>
-                                  <span>{a.addon_item_name || (a as Record<string, unknown>).name as string || ""}</span>
+                                  <span>{a.addon_item_name}</span>
                                   {a.price > 0 && (
                                     <span className="text-[oklch(0.70_0.03_280)] font-mono text-[10px]">
                                       (+{formatCurrency(a.price)})

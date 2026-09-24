@@ -68,26 +68,45 @@ app = FastAPI(
 )
 
 # CORS Configuration
-# Secure origin regex allowing dynamic cafe subdomains (*.mydomain.com)
-clean_domain = (
-    settings.APP_DOMAIN.replace("https://", "")
-    .replace("http://", "")
-    .split("/")[0]
-    .split(":")[0]
-    .strip()
-    .lower()
-)
+# Secure origin handling: allows specific origins and strictly scoped subdomains.
+# CRITICAL: We NEVER allow a broad "*.vercel.app" regex when allow_credentials=True,
+# because any arbitrary third-party application on Vercel could otherwise make credentialed requests.
+
+def _extract_domain(url_or_domain: str) -> str:
+    clean = url_or_domain.replace("https://", "").replace("http://", "")
+    return clean.split("/")[0].split(":")[0].strip().lower()
+
+clean_domain = _extract_domain(settings.APP_DOMAIN)
+frontend_domain = _extract_domain(settings.FRONTEND_URL)
+
+allowed_origins: list[str] = []
+if isinstance(settings.CORS_ORIGINS, list):
+    allowed_origins.extend(settings.CORS_ORIGINS)
+elif isinstance(settings.CORS_ORIGINS, str):
+    allowed_origins.append(settings.CORS_ORIGINS)
+
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in allowed_origins:
+    allowed_origins.append(settings.FRONTEND_URL)
+
+for default_prod_origin in ["https://cafe-qr-seven.vercel.app"]:
+    if default_prod_origin not in allowed_origins:
+        allowed_origins.append(default_prod_origin)
+
 if settings.ENVIRONMENT == "development":
     cors_origin_regex = r"^https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1)(:[0-9]+)?$"
 else:
     import re
-    # Allow production custom domain (and wildcard subdomains) as well as Vercel deployment URLs (*.vercel.app)
-    cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)*({re.escape(clean_domain)}|vercel\.app)$"
-
+    # Strictly allow subdomains of our verified domains only (never the shared vercel.app suffix)
+    trusted_domains = {clean_domain, frontend_domain, "cafe-qr-seven.vercel.app"} - {"localhost", "127.0.0.1", "", "yourdomain.com"}
+    if trusted_domains:
+        escaped_domains = "|".join(re.escape(d) for d in trusted_domains)
+        cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)*({escaped_domains})$"
+    else:
+        cors_origin_regex = None
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=allowed_origins,
     allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
