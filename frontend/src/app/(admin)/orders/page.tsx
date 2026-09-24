@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { PageHeader } from "@/components/admin/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -9,11 +8,24 @@ import { OrderRowSkeleton } from "@/components/ui/Skeleton";
 import { Modal } from "@/components/ui/Modal";
 import { adminService } from "@/services/apiClient";
 import { Order, OrderStatus } from "@/types";
-import { ShoppingBag, RefreshCw, WifiOff, AlertTriangle } from "lucide-react";
+import {
+  ShoppingBag,
+  RefreshCw,
+  AlertTriangle,
+  Clock,
+  MapPin,
+  User,
+  Hash,
+  Store,
+} from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
+import {
+  formatOrderDateTime,
+  formatOrderDate,
+  formatOrderTime,
+  formatOrderTableContext,
+} from "@/lib/orderFormatters";
 import { useCafeOrderRealtime } from "@/hooks/useCafeOrderRealtime";
-
-
 import { useTenant } from "@/context/TenantContext";
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
@@ -28,24 +40,31 @@ const STATUS_FILTERS: { label: string; value: string }[] = [
 export default function AdminOrdersPage() {
   const { cafe } = useTenant();
   const [currentCafeId, setCurrentCafeId] = React.useState<string | undefined>(cafe?.cafe_id);
+  const [cafeDisplayName, setCafeDisplayName] = React.useState<string>(cafe?.name || "");
   const [selectedFilter, setSelectedFilter] = React.useState("ALL");
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-  // If cafe_id is not yet in TenantContext, retrieve from auth /me
+  // If cafe context is not yet loaded, retrieve from auth /me
   React.useEffect(() => {
     if (cafe?.cafe_id) {
       setCurrentCafeId(cafe.cafe_id);
+      if (cafe.name) setCafeDisplayName(cafe.name);
     } else {
-      adminService.getMe()
+      adminService
+        .getMe()
         .then((res) => {
           if (res?.user?.cafe_id) {
             setCurrentCafeId(res.user.cafe_id);
           }
+          if (res?.cafe?.name) {
+            setCafeDisplayName(res.cafe.name);
+          }
         })
         .catch(() => {
-          // Unauthenticated or not loaded yet
+          // Unauthenticated or waiting for session
         });
     }
   }, [cafe]);
@@ -63,6 +82,15 @@ export default function AdminOrdersPage() {
     if (selectedFilter === "ALL") return orders;
     return orders.filter((o) => o.order_status === selectedFilter);
   }, [orders, selectedFilter]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshOrders();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleStatusTransition = async (orderId: string, nextStatus: OrderStatus) => {
     setIsUpdatingStatus(true);
@@ -83,81 +111,99 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const cafeTitle = cafeDisplayName || cafe?.name || "Apex Cafe";
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Orders"
-          description="Monitor and manage real-time table orders from customers."
-        />
+      {/* Top Header with Cafe Context & Live Connection Status */}
+      <div className="flex flex-col gap-4 pb-6 sm:flex-row sm:items-center sm:justify-between border-b border-[oklch(1_0_0/8%)]">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[oklch(0.62_0.27_305/15%)] text-[oklch(0.85_0.15_305)] border border-[oklch(0.62_0.27_305/30%)]">
+              <Store className="h-3 w-3" />
+              <span>{cafeTitle}</span>
+            </span>
 
-        {/* Real-time Connection Status & Refresh */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border",
-              connectionState === "connected"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : connectionState === "connecting"
-                ? "bg-sky-50 text-sky-700 border-sky-200"
-                : "bg-amber-50 text-amber-700 border-amber-200"
-            )}
-            title={
-              connectionState === "connected"
-                ? "Connected to Ably real-time stream"
-                : connectionState === "connecting"
-                ? "Establishing live connection..."
-                : "Live updates temporarily disconnected"
-            }
-          >
+            {/* Live / Reconnecting / Offline Pill */}
             {connectionState === "connected" ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-500/30"
+                title="Connected to Ably real-time stream"
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Live</span>
-              </>
+              </span>
             ) : connectionState === "connecting" ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
-                <span>Connecting...</span>
-              </>
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-500/30"
+                title="Establishing live connection..."
+              >
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                <span>Reconnecting...</span>
+              </span>
             ) : (
-              <>
-                <WifiOff className="h-3 w-3 text-amber-600" />
-                <span>Offline Sync</span>
-              </>
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-950/80 text-rose-300 border border-rose-500/30"
+                title="Live updates disconnected"
+              >
+                <span className="h-2 w-2 rounded-full bg-rose-500" />
+                <span>Offline</span>
+              </span>
             )}
           </div>
 
+          <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+            Orders
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-[oklch(0.70_0.03_280)]">
+            Monitor and manage real-time table orders from customers.
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refreshOrders()}
-            className="gap-1.5"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="gap-1.5 bg-[oklch(0.18_0.025_280)] border-[oklch(1_0_0/12%)] hover:bg-[oklch(0.22_0.03_280)] text-white text-xs"
             title="Refresh orders manually"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Refresh</span>
+            <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+            <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
           </Button>
         </div>
       </div>
 
-      {connectionState === "disconnected" && (
-        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-          <span>
-            Live updates are temporarily disconnected. You can continue managing orders normally and use the Refresh button to pull latest data.
-          </span>
+      {/* Offline Sync Disconnection Warning Banner */}
+      {(connectionState === "disconnected" || connectionState === "failed") && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-amber-950/40 border border-amber-500/30 p-3.5 text-xs text-amber-200">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
+            <span>
+              Live updates are temporarily disconnected. You can continue managing orders normally and use the Refresh button to pull latest data.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleManualRefresh}
+            className="self-start sm:self-auto shrink-0 text-xs py-1 h-7 border-amber-500/40 hover:bg-amber-500/10 text-amber-200"
+          >
+            Retry Connection
+          </Button>
         </div>
       )}
 
       {actionError && (
-        <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+        <div className="rounded-xl bg-rose-950/40 border border-rose-500/30 p-3 text-xs text-rose-300">
           {actionError}
         </div>
       )}
 
       {loadError && (
-        <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+        <div className="rounded-xl bg-rose-950/40 border border-rose-500/30 p-3 text-xs text-rose-300">
           {loadError}
         </div>
       )}
@@ -200,89 +246,153 @@ export default function AdminOrdersPage() {
           onAction={selectedFilter !== "ALL" ? () => setSelectedFilter("ALL") : undefined}
         />
       ) : (
-        <div className="space-y-3">
-          {filteredOrders.map((order) => (
-            <div
-              key={order.order_id}
-              onClick={() => setSelectedOrder(order)}
-              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] p-4 shadow-xl hover:border-[oklch(0.62_0.27_305/40%)] transition cursor-pointer gap-3"
-            >
-              <div className="flex items-start sm:items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[oklch(0.62_0.27_305/15%)] border border-[oklch(0.62_0.27_305/30%)] text-purple-200 font-bold text-xs shrink-0">
-                  #{order.order_number}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">
-                      {order.table_number ? `Table ${order.table_number}` : "Takeaway"}
-                    </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredOrders.map((order) => {
+            const tableAndType = formatOrderTableContext(order);
+            const formattedTime = formatOrderDateTime(order.created_at);
+
+            return (
+              <div
+                key={order.order_id}
+                onClick={() => setSelectedOrder(order)}
+                className="group flex flex-col justify-between rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] p-5 shadow-xl hover:border-[oklch(0.62_0.27_305/50%)] hover:shadow-2xl hover:shadow-[oklch(0.62_0.27_305/10%)] transition-all cursor-pointer"
+              >
+                {/* Top Row: Order #, Table/Type, Time, Status */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 px-2.5 items-center justify-center rounded-lg bg-[oklch(0.62_0.27_305/15%)] border border-[oklch(0.62_0.27_305/30%)] text-[oklch(0.85_0.15_305)] font-bold text-xs tracking-wider">
+                        #{order.order_number}
+                      </span>
+                      <span className="text-xs font-semibold text-white/90">
+                        {tableAndType}
+                      </span>
+                    </div>
+
                     <Badge status={order.order_status} />
                   </div>
-                  <p className="mt-0.5 text-xs text-[oklch(0.70_0.03_280)]">
-                    {order.items.map((i) => `${i.quantity}x ${i.product_name}`).join(", ")}
-                  </p>
+
+                  {/* Formatted Date & Time */}
+                  <div className="flex items-center gap-1.5 text-xs text-[oklch(0.65_0.03_280)]">
+                    <Clock className="h-3.5 w-3.5 shrink-0 text-[oklch(0.62_0.27_305)]" />
+                    <span>{formattedTime}</span>
+                  </div>
+
+                  {/* Customer Information (if present) */}
+                  {order.customer_name && (
+                    <div className="flex items-center gap-1.5 text-xs text-[oklch(0.70_0.03_280)]">
+                      <User className="h-3 w-3 shrink-0 text-white/50" />
+                      <span className="truncate">
+                        {order.customer_name}
+                        {order.customer_phone ? ` (${order.customer_phone})` : ""}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Items Preview List */}
+                  <div className="divide-y divide-[oklch(1_0_0/6%)] border-y border-[oklch(1_0_0/8%)] py-2 my-2 space-y-1.5">
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-xs pt-1.5 first:pt-0"
+                      >
+                        <span className="text-white/90 truncate mr-2">
+                          <span className="font-semibold text-white">
+                            {item.quantity} ×
+                          </span>{" "}
+                          {item.product_name}
+                        </span>
+                        <span className="font-mono text-[oklch(0.70_0.03_280)] shrink-0">
+                          {formatCurrency(item.subtotal)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bottom Row: Total Price and Quick Action Button */}
+                <div className="pt-3 mt-1 flex items-center justify-between gap-3 border-t border-[oklch(1_0_0/8%)]">
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-wider text-[oklch(0.60_0.03_280)]">
+                      Total
+                    </span>
+                    <span className="text-base font-bold text-white tracking-tight">
+                      {formatCurrency(order.total)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {order.order_status === "PLACED" && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={isUpdatingStatus}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusTransition(order.order_id, "ACCEPTED");
+                        }}
+                        className="text-xs px-3 py-1.5 h-8 font-semibold shadow-md shadow-[oklch(0.62_0.27_305/20%)]"
+                      >
+                        Accept
+                      </Button>
+                    )}
+                    {order.order_status === "ACCEPTED" && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={isUpdatingStatus}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusTransition(order.order_id, "PREPARING");
+                        }}
+                        className="text-xs px-3 py-1.5 h-8 font-semibold"
+                      >
+                        Prepare
+                      </Button>
+                    )}
+                    {order.order_status === "PREPARING" && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={isUpdatingStatus}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusTransition(order.order_id, "READY");
+                        }}
+                        className="text-xs px-3 py-1.5 h-8 font-semibold"
+                      >
+                        Mark Ready
+                      </Button>
+                    )}
+                    {order.order_status === "READY" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isUpdatingStatus}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusTransition(order.order_id, "COMPLETED");
+                        }}
+                        className="text-xs px-3 py-1.5 h-8 font-semibold border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                      >
+                        Complete
+                      </Button>
+                    )}
+                    {order.order_status === "COMPLETED" && (
+                      <span className="text-xs font-semibold text-emerald-400 px-2 py-1 rounded-md bg-emerald-950/60 border border-emerald-500/30">
+                        Completed
+                      </span>
+                    )}
+                    {order.order_status === "CANCELLED" && (
+                      <span className="text-xs font-semibold text-rose-400 px-2 py-1 rounded-md bg-rose-950/60 border border-rose-500/30">
+                        Cancelled
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[oklch(1_0_0/8%)]">
-                <span className="text-sm font-bold text-white">
-                  {formatCurrency(order.total)}
-                </span>
-                {order.order_status === "PLACED" && (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    disabled={isUpdatingStatus}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusTransition(order.order_id, "ACCEPTED");
-                    }}
-                  >
-                    Accept
-                  </Button>
-                )}
-                {order.order_status === "ACCEPTED" && (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    disabled={isUpdatingStatus}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusTransition(order.order_id, "PREPARING");
-                    }}
-                  >
-                    Prepare
-                  </Button>
-                )}
-                {order.order_status === "PREPARING" && (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    disabled={isUpdatingStatus}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusTransition(order.order_id, "READY");
-                    }}
-                  >
-                    Mark Ready
-                  </Button>
-                )}
-                {order.order_status === "READY" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isUpdatingStatus}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusTransition(order.order_id, "COMPLETED");
-                    }}
-                  >
-                    Complete
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -292,51 +402,177 @@ export default function AdminOrdersPage() {
         onClose={() => setSelectedOrder(null)}
         title={selectedOrder ? `Order #${selectedOrder.order_number}` : ""}
         description={
-          selectedOrder?.table_number
-            ? `Table ${selectedOrder.table_number}`
-            : "Order Details"
+          selectedOrder
+            ? formatOrderTableContext(selectedOrder)
+            : "Complete Order Details"
         }
-        maxWidth="md"
+        maxWidth="lg"
       >
         {selectedOrder && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs">
-              <span className="text-slate-600">Status</span>
-              <Badge status={selectedOrder.order_status} />
+          <div className="space-y-5 text-white">
+            {/* Header Metadata Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[oklch(0.15_0.02_280)] border border-[oklch(1_0_0/8%)] text-xs">
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Status
+                </span>
+                <div className="mt-1">
+                  <Badge status={selectedOrder.order_status} />
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Order Type
+                </span>
+                <span className="mt-1 block font-semibold text-white/90">
+                  {selectedOrder.order_type === "TAKEAWAY" ? "Takeaway" : "Dine-in"}
+                </span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Table
+                </span>
+                <span className="mt-1 block font-semibold text-white/90">
+                  {selectedOrder.table_number
+                    ? selectedOrder.table_number.toLowerCase().startsWith("table")
+                      ? selectedOrder.table_number
+                      : `Table ${selectedOrder.table_number.padStart(2, "0")}`
+                    : selectedOrder.order_type === "DINE_IN"
+                    ? "Table information unavailable"
+                    : "N/A (Takeaway)"}
+                </span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Order Date
+                </span>
+                <span className="mt-1 block font-medium text-white/90">
+                  {formatOrderDate(selectedOrder.created_at)}
+                </span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Order Time
+                </span>
+                <span className="mt-1 block font-medium text-white/90">
+                  {formatOrderTime(selectedOrder.created_at)}
+                </span>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-semibold text-[oklch(0.60_0.03_280)]">
+                  Cafe
+                </span>
+                <span className="mt-1 block font-medium text-white/90 truncate">
+                  {cafeTitle}
+                </span>
+              </div>
             </div>
 
+            {/* Customer Details if present */}
             {selectedOrder.customer_name && (
-              <div className="text-xs text-slate-600">
-                <span className="font-semibold text-slate-800">Customer: </span>
-                {selectedOrder.customer_name}{" "}
-                {selectedOrder.customer_phone && `(${selectedOrder.customer_phone})`}
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-[oklch(0.15_0.02_280)] border border-[oklch(1_0_0/8%)] text-xs">
+                <User className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0" />
+                <div>
+                  <span className="font-semibold text-white">
+                    {selectedOrder.customer_name}
+                  </span>
+                  {selectedOrder.customer_phone && (
+                    <span className="text-[oklch(0.70_0.03_280)] ml-2">
+                      · {selectedOrder.customer_phone}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
-            <div className="divide-y divide-slate-100 border-y border-slate-100 py-2 text-xs">
-              {selectedOrder.items.map((item, idx) => (
-                <div key={idx} className="flex justify-between py-1.5">
-                  <span className="text-slate-700">
-                    {item.quantity} × {item.product_name}
-                  </span>
-                  <span className="font-semibold text-slate-900">
-                    {formatCurrency(item.subtotal)}
+            {/* Order Reference if present */}
+            {selectedOrder.order_reference && (
+              <div className="flex items-center gap-2 text-xs text-[oklch(0.65_0.03_280)] font-mono">
+                <Hash className="h-3.5 w-3.5 shrink-0 text-white/40" />
+                <span>Reference: {selectedOrder.order_reference}</span>
+              </div>
+            )}
+
+            {/* Detailed Items Table */}
+            <div>
+              <h4 className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
+                Order Items
+              </h4>
+              <div className="rounded-xl border border-[oklch(1_0_0/8%)] bg-[oklch(0.15_0.02_280)] overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.12_0.02_280)] text-[oklch(0.65_0.03_280)]">
+                    <tr>
+                      <th className="py-2.5 px-3 font-semibold">Item</th>
+                      <th className="py-2.5 px-3 font-semibold text-center">Qty</th>
+                      <th className="py-2.5 px-3 font-semibold text-right">Price</th>
+                      <th className="py-2.5 px-3 font-semibold text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[oklch(1_0_0/6%)]">
+                    {selectedOrder.items.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-[oklch(1_0_0/3%)]">
+                        <td className="py-2.5 px-3 font-medium text-white/90">
+                          {item.product_name}
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-white/80 font-mono">
+                          {item.quantity}
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-[oklch(0.70_0.03_280)] font-mono">
+                          {formatCurrency(item.unit_price)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-semibold text-white font-mono">
+                          {formatCurrency(item.subtotal)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="rounded-xl bg-[oklch(0.15_0.02_280)] border border-[oklch(1_0_0/8%)] p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between text-[oklch(0.70_0.03_280)]">
+                <span>Subtotal</span>
+                <span className="font-mono text-white/90">
+                  {formatCurrency(selectedOrder.subtotal)}
+                </span>
+              </div>
+              {selectedOrder.tax > 0 && (
+                <div className="flex justify-between text-[oklch(0.70_0.03_280)]">
+                  <span>Tax</span>
+                  <span className="font-mono text-white/90">
+                    {formatCurrency(selectedOrder.tax)}
                   </span>
                 </div>
-              ))}
+              )}
+              {selectedOrder.discount > 0 && (
+                <div className="flex justify-between text-emerald-400">
+                  <span>Discount</span>
+                  <span className="font-mono">
+                    -{formatCurrency(selectedOrder.discount)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-[oklch(1_0_0/8%)]">
+                <span>Total</span>
+                <span className="text-base text-[oklch(0.85_0.15_305)] font-mono">
+                  {formatCurrency(selectedOrder.total)}
+                </span>
+              </div>
             </div>
 
-            <div className="flex justify-between text-sm font-bold text-slate-900 pt-1">
-              <span>Total</span>
-              <span>{formatCurrency(selectedOrder.total)}</span>
-            </div>
-
-            {/* Quick Status Actions in Modal */}
-            <div className="pt-3 flex gap-2">
+            {/* Quick Status Action in Modal */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 bg-[oklch(0.18_0.025_280)] border-[oklch(1_0_0/12%)] text-white hover:bg-[oklch(0.22_0.03_280)]"
                 onClick={() => setSelectedOrder(null)}
               >
                 Close
@@ -385,12 +621,12 @@ export default function AdminOrdersPage() {
                   variant="primary"
                   size="sm"
                   isLoading={isUpdatingStatus}
-                  className="flex-1"
+                  className="flex-1 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
                   onClick={() =>
                     handleStatusTransition(selectedOrder.order_id, "COMPLETED")
                   }
                 >
-                  Mark Completed
+                  Complete Order
                 </Button>
               )}
             </div>

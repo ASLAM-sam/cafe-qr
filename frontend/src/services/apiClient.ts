@@ -190,7 +190,12 @@ export const customerService = {
     request<Order>(`/public/orders/${encodeURIComponent(orderReference)}`, { method: "GET" }, subdomain),
 
   getCustomerRealtimeToken: (orderReference: string) =>
-    request<{ tokenRequest: Record<string, unknown> }>(
+    request<{
+      configured: boolean;
+      tokenRequest?: Record<string, unknown>;
+      token_request?: Record<string, unknown>;
+      message?: string;
+    }>(
       `/realtime/customer-token/${encodeURIComponent(orderReference)}`,
       { method: "GET" }
     ),
@@ -364,7 +369,12 @@ export const adminService = {
   },
 
   getRealtimeToken: () =>
-    request<{ tokenRequest: Record<string, unknown> }>(`/realtime/token`, { method: "GET" }),
+    request<{
+      configured: boolean;
+      tokenRequest?: Record<string, unknown>;
+      token_request?: Record<string, unknown>;
+      message?: string;
+    }>(`/realtime/token`, { method: "GET" }),
 };
 
 /**

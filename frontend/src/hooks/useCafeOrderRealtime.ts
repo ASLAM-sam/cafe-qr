@@ -15,7 +15,10 @@ interface RealtimeOrderPayload {
   table_id?: string;
   table_number?: string;
   order_type: "DINE_IN" | "TAKEAWAY";
-  status: OrderStatus;
+  customer_name?: string;
+  customer_phone?: string;
+  order_status?: OrderStatus;
+  status?: OrderStatus;
   total: number;
   subtotal?: number;
   tax?: number;
@@ -27,15 +30,18 @@ interface RealtimeOrderPayload {
     subtotal: number;
   }[];
   created_at: string;
+  updated_at?: string;
 }
 
 export function useCafeOrderRealtime(cafeId?: string) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectionState, setConnectionState] = useState<"connected" | "connecting" | "disconnected" | "failed">("connecting");
+  const [connectionState, setConnectionState] = useState<
+    "connected" | "connecting" | "disconnected" | "failed"
+  >("connecting");
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-  
+
   // Track orders ref to avoid stale closures in event handlers
   const ordersRef = useRef<Order[]>([]);
   useEffect(() => {
@@ -46,7 +52,13 @@ export function useCafeOrderRealtime(cafeId?: string) {
     try {
       setError(null);
       const data = await adminService.getOrders();
-      setOrders(data);
+      // Ensure newest first sorting by server created_at timestamp
+      const sorted = [...(data || [])].sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime() || 0;
+        const timeB = new Date(b.created_at).getTime() || 0;
+        return timeB - timeA;
+      });
+      setOrders(sorted);
       setLastRefreshed(new Date());
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load orders.";
@@ -55,6 +67,23 @@ export function useCafeOrderRealtime(cafeId?: string) {
       setLoading(false);
     }
   }, []);
+
+  // Manual refresh also attempts to reconnect Ably if currently disconnected
+  const handleRefresh = useCallback(async () => {
+    try {
+      const client = getAdminAblyClient();
+      if (
+        client &&
+        client.connection.state !== "connected" &&
+        client.connection.state !== "connecting"
+      ) {
+        client.connection.connect();
+      }
+    } catch {
+      // Ignore Ably client reconnect error during manual refresh
+    }
+    await fetchOrders();
+  }, [fetchOrders]);
 
   // Initial fetch
   useEffect(() => {
@@ -76,13 +105,20 @@ export function useCafeOrderRealtime(cafeId?: string) {
       const handleConnectionChange = (stateChange: Ably.ConnectionStateChange) => {
         if (stateChange.current === "connected") {
           setConnectionState("connected");
-          // On reconnect from disconnected/suspended, re-fetch to reconcile state
-          if (stateChange.previous === "disconnected" || stateChange.previous === "suspended") {
+          // On reconnect from disconnected/suspended/failed, reconcile orders with server
+          if (
+            stateChange.previous === "disconnected" ||
+            stateChange.previous === "suspended" ||
+            stateChange.previous === "failed"
+          ) {
             fetchOrders();
           }
         } else if (stateChange.current === "connecting") {
           setConnectionState("connecting");
-        } else if (stateChange.current === "disconnected" || stateChange.current === "suspended") {
+        } else if (
+          stateChange.current === "disconnected" ||
+          stateChange.current === "suspended"
+        ) {
           setConnectionState("disconnected");
         } else if (stateChange.current === "failed") {
           setConnectionState("failed");
@@ -90,8 +126,19 @@ export function useCafeOrderRealtime(cafeId?: string) {
       };
 
       client.connection.on(handleConnectionChange);
+
+      // Initialize state from existing connection
       if (client.connection.state === "connected") {
         setConnectionState("connected");
+      } else if (client.connection.state === "connecting") {
+        setConnectionState("connecting");
+      } else if (
+        client.connection.state === "disconnected" ||
+        client.connection.state === "suspended"
+      ) {
+        setConnectionState("disconnected");
+      } else if (client.connection.state === "failed") {
+        setConnectionState("failed");
       }
 
       // Handle real-time order events
@@ -100,21 +147,32 @@ export function useCafeOrderRealtime(cafeId?: string) {
         if (!payload || !payload.order_id) return;
 
         setOrders((prevOrders) => {
-          const existingIndex = prevOrders.findIndex((o) => o.order_id === payload.order_id);
+          const resolvedStatus = (payload.order_status ||
+            payload.status ||
+            "PLACED") as OrderStatus;
+
+          const existingIndex = prevOrders.findIndex(
+            (o) =>
+              o.order_id === payload.order_id ||
+              (payload.order_reference &&
+                o.order_reference === payload.order_reference)
+          );
 
           if (message.name === "NEW_ORDER") {
-            // Deduplicate: if order already exists in state, ignore or update
+            // Deduplicate: if order already exists in state, update status and total
             if (existingIndex !== -1) {
               const updated = [...prevOrders];
               updated[existingIndex] = {
                 ...updated[existingIndex],
-                order_status: payload.status,
-                total: payload.total,
+                order_status: resolvedStatus,
+                total: payload.total ?? updated[existingIndex].total,
+                table_number:
+                  payload.table_number || updated[existingIndex].table_number,
               };
               return updated;
             }
 
-            // Construct new order entry
+            // Construct new order entry with server timestamp
             const newOrder: Order = {
               order_id: payload.order_id,
               order_number: payload.order_number,
@@ -122,18 +180,30 @@ export function useCafeOrderRealtime(cafeId?: string) {
               cafe_id: payload.cafe_id,
               table_id: payload.table_id,
               table_number: payload.table_number,
-              order_type: payload.order_type,
+              order_type: payload.order_type || "DINE_IN",
+              customer_name: payload.customer_name,
+              customer_phone: payload.customer_phone,
               items: payload.items || [],
-              subtotal: payload.subtotal || payload.total,
-              tax: payload.tax || 0,
+              subtotal: payload.subtotal ?? payload.total,
+              tax: payload.tax ?? 0,
               discount: 0,
               total: payload.total,
               payment_status: "PENDING",
-              order_status: payload.status || "PLACED",
+              order_status: resolvedStatus,
               created_at: payload.created_at || new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              updated_at:
+                payload.updated_at ||
+                payload.created_at ||
+                new Date().toISOString(),
             };
-            return [newOrder, ...prevOrders];
+
+            // Prepend new order and maintain newest-first order
+            const merged = [newOrder, ...prevOrders];
+            return merged.sort((a, b) => {
+              const timeA = new Date(a.created_at).getTime() || 0;
+              const timeB = new Date(b.created_at).getTime() || 0;
+              return timeB - timeA;
+            });
           }
 
           // Status update events (ORDER_ACCEPTED, ORDER_PREPARING, ORDER_READY, ORDER_COMPLETED, ORDER_CANCELLED)
@@ -141,13 +211,13 @@ export function useCafeOrderRealtime(cafeId?: string) {
             const updated = [...prevOrders];
             updated[existingIndex] = {
               ...updated[existingIndex],
-              order_status: payload.status,
-              updated_at: new Date().toISOString(),
+              order_status: resolvedStatus,
+              updated_at: payload.updated_at || new Date().toISOString(),
             };
             return updated;
           }
 
-          // If order wasn't in state (e.g. pagination or missed event), re-fetch authoritative list
+          // If order wasn't in state (e.g. initial fetch missed it), re-fetch authoritative list
           fetchOrders();
           return prevOrders;
         });
@@ -175,7 +245,7 @@ export function useCafeOrderRealtime(cafeId?: string) {
     error,
     connectionState,
     lastRefreshed,
-    refreshOrders: fetchOrders,
+    refreshOrders: handleRefresh,
     setOrders,
   };
 }

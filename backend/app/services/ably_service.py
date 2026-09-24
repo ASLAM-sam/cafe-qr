@@ -60,6 +60,7 @@ class AblyService:
             "tax": order.get("tax", 0.0),
             "total": order.get("total", 0.0),
             "order_status": order.get("order_status", "PLACED"),
+            "status": order.get("order_status", "PLACED"),
             "created_at": created_at_str,
         }
 
@@ -100,8 +101,10 @@ class AblyService:
             "order_number": order.get("order_number"),
             "order_reference": order_reference,
             "cafe_id": cafe_id,
+            "table_id": order.get("table_id"),
             "table_number": order.get("table_number"),
             "order_status": new_status,
+            "status": new_status,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -142,16 +145,19 @@ class AblyService:
                 "client_id": client_id,
                 "capability": capability,
             }
-            token_request = await self._client.auth.create_token_request(token_params)
+            token_req = await self._client.auth.create_token_request(token_params)
+            token_dict = token_req.to_dict() if hasattr(token_req, "to_dict") else dict(token_req)
             return {
                 "configured": True,
-                "token_request": token_request,
+                "token_request": token_dict,
+                "tokenRequest": token_dict,
             }
         except Exception as e:
             logger.error(f"Failed to create Ably token request: {e}")
             return {
                 "configured": False,
                 "error": str(e),
+                "message": str(e),
             }
 
 

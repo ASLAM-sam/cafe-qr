@@ -66,16 +66,31 @@ class OrderService:
         if table_token:
             table = await self.table_repo.get_by_qr_token(table_token)
             if not table or table["cafe_id"] != cafe_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid table QR code for this cafe.",
-                )
+                # Check if table_token was passed as table_id
+                table_fallback = await self.table_repo.get_by_id(cafe_id, table_token)
+                if table_fallback:
+                    table = table_fallback
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid table QR code for this cafe.",
+                    )
             table_id = table["table_id"]
             table_number = table["table_number"]
         elif table_id:
             table = await self.table_repo.get_by_id(cafe_id, table_id)
-            if table:
-                table_number = table["table_number"]
+            if not table:
+                # Check if table_id was passed as qr_token
+                table_fallback = await self.table_repo.get_by_qr_token(table_id)
+                if table_fallback and table_fallback["cafe_id"] == cafe_id:
+                    table = table_fallback
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid table for this cafe.",
+                    )
+            table_id = table["table_id"]
+            table_number = table["table_number"]
 
         # 4. Validate items and read authoritative prices from database
         requested_items = order_data.get("items", [])
@@ -174,22 +189,47 @@ class OrderService:
             logger.error(f"Failed to publish NEW_ORDER via Ably: {e}")
         return created
 
+    async def _enrich_order_table(self, cafe_id: str, order: Dict[str, Any]) -> None:
+        """Resolve table_number if missing and ensure timezone on created_at."""
+        if not order.get("table_number") and order.get("table_id"):
+            table = await self.table_repo.get_by_id(cafe_id, order["table_id"])
+            if table:
+                order["table_number"] = table.get("table_number")
+
+        # Guarantee UTC timezone awareness on created_at and updated_at
+        created_at = order.get("created_at")
+        if isinstance(created_at, datetime) and created_at.tzinfo is None:
+            order["created_at"] = created_at.replace(tzinfo=timezone.utc)
+        elif not created_at:
+            order["created_at"] = order.get("updated_at") or datetime.now(timezone.utc)
+
+        updated_at = order.get("updated_at")
+        if isinstance(updated_at, datetime) and updated_at.tzinfo is None:
+            order["updated_at"] = updated_at.replace(tzinfo=timezone.utc)
+        elif not updated_at:
+            order["updated_at"] = order.get("created_at")
+
     async def get_order_by_reference(self, order_reference: str) -> Dict[str, Any]:
         """Public order tracking endpoint for customers using secure unguessable reference."""
         order = await self.order_repo.get_by_reference(order_reference)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+        await self._enrich_order_table(order.get("cafe_id", ""), order)
         return order
 
     async def list_orders(
         self, cafe_id: str, status: Optional[str] = None, limit: int = 50, skip: int = 0
     ) -> List[Dict[str, Any]]:
-        return await self.order_repo.get_all(cafe_id, status=status, limit=limit, skip=skip)
+        orders = await self.order_repo.get_all(cafe_id, status=status, limit=limit, skip=skip)
+        for o in orders:
+            await self._enrich_order_table(cafe_id, o)
+        return orders
 
     async def get_order(self, cafe_id: str, order_id: str) -> Dict[str, Any]:
         order = await self.order_repo.get_by_id(cafe_id, order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+        await self._enrich_order_table(cafe_id, order)
         return order
 
     async def update_order_status(

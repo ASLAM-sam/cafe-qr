@@ -22,7 +22,13 @@ export function getAdminAblyClient(): Ably.Realtime {
         authCallback: async (_data, callback) => {
           try {
             const res = await adminService.getRealtimeToken();
-            callback(null, res.tokenRequest as unknown as Ably.TokenRequest);
+            const tokenReq = (res.tokenRequest || res.token_request) as unknown as Ably.TokenRequest;
+            if (!tokenReq || res.configured === false) {
+              const msg = res.message || "Realtime is not configured on this server.";
+              callback(msg, null);
+              return;
+            }
+            callback(null, tokenReq);
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Token request failed";
             callback(msg, null);
@@ -56,7 +62,13 @@ export function getCustomerAblyClient(orderReference: string): Ably.Realtime {
         authCallback: async (_data, callback) => {
           try {
             const res = await customerService.getCustomerRealtimeToken(orderReference);
-            callback(null, res.tokenRequest as unknown as Ably.TokenRequest);
+            const tokenReq = (res.tokenRequest || res.token_request) as unknown as Ably.TokenRequest;
+            if (!tokenReq || res.configured === false) {
+              const msg = res.message || "Customer realtime tracking is not configured.";
+              callback(msg, null);
+              return;
+            }
+            callback(null, tokenReq);
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Customer token request failed";
             callback(msg, null);

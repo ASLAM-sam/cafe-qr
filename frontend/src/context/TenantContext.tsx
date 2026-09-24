@@ -9,9 +9,10 @@ interface TenantContextType {
   isPlatform: boolean;
   tableToken: string | null;
   tableNumber: string | null;
+  tableId: string | null;
   isLoading: boolean;
   setCafe: (cafe: Cafe | null) => void;
-  setTableContext: (token: string | null, number: string | null) => void;
+  setTableContext: (token: string | null, number: string | null, id?: string | null) => void;
 }
 
 const TenantContext = React.createContext<TenantContextType | undefined>(undefined);
@@ -139,6 +140,16 @@ export function TenantProvider({
     }
     return null;
   });
+  const [tableId, setTableId] = React.useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return sessionStorage.getItem("cafe_table_id") || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -182,6 +193,13 @@ export function TenantProvider({
       }
     }
 
+    try {
+      const storedId = sessionStorage.getItem("cafe_table_id");
+      if (storedId && !tableId) setTableId(storedId);
+    } catch {
+      // Ignore sessionStorage errors
+    }
+
     const resolution = resolveTenantFromHost(hostname, urlParams);
     setSubdomain(resolution.subdomain);
     setIsPlatform(resolution.isPlatform);
@@ -195,18 +213,21 @@ export function TenantProvider({
     }
 
     setIsLoading(false);
-  }, [cafe, tableToken, tableNumber]);
+  }, [cafe, tableToken, tableNumber, tableId]);
 
   const setTableContext = React.useCallback(
-    (token: string | null, number: string | null) => {
+    (token: string | null, number: string | null, id?: string | null) => {
       setTableToken(token);
       setTableNumber(number);
+      if (id !== undefined) setTableId(id);
       if (typeof window !== "undefined") {
         try {
           if (token) sessionStorage.setItem("cafe_table_token", token);
           else sessionStorage.removeItem("cafe_table_token");
           if (number) sessionStorage.setItem("cafe_table_number", number);
           else sessionStorage.removeItem("cafe_table_number");
+          if (id) sessionStorage.setItem("cafe_table_id", id);
+          else if (id === null) sessionStorage.removeItem("cafe_table_id");
         } catch {
           // Ignore sessionStorage errors
         }
@@ -223,6 +244,7 @@ export function TenantProvider({
         isPlatform,
         tableToken,
         tableNumber,
+        tableId,
         isLoading,
         setCafe,
         setTableContext,

@@ -33,12 +33,13 @@ export default function TableQrRedirectPage() {
         if (!isMounted) return;
 
         if (res?.table && res?.cafe) {
-          setTableContext(res.table.qr_token, res.table.table_number);
+          setTableContext(res.table.qr_token, res.table.table_number, res.table.table_id);
 
           if (typeof window !== "undefined") {
             try {
               sessionStorage.setItem("cafe_table_token", res.table.qr_token);
               sessionStorage.setItem("cafe_table_number", res.table.table_number);
+              sessionStorage.setItem("cafe_table_id", res.table.table_id);
               sessionStorage.setItem("cafe_subdomain", res.cafe.subdomain);
             } catch {
               // Ignore sessionStorage errors in restricted environments

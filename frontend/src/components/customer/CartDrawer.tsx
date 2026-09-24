@@ -27,7 +27,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
     removeItem,
     clearCart,
   } = useCart();
-  const { cafe, tableNumber, tableToken, subdomain } = useTenant();
+  const { cafe, tableNumber, tableToken, tableId, subdomain } = useTenant();
 
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
@@ -57,7 +57,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
         : `ord_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       const orderPayload = {
-        table_id: tableToken || undefined,
+        table_id: tableId || undefined,
         table_token: tableToken || undefined,
         order_type: orderType,
         customer_name: customerName.trim() || undefined,
