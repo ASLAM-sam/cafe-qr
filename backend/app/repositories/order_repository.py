@@ -6,7 +6,9 @@ from pymongo import DESCENDING
 
 class OrderRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
+        self.db = db
         self.collection = db.orders
+        self.counters = db.counters
 
     async def get_all(
         self,
@@ -42,9 +44,16 @@ class OrderRepository:
         )
 
     async def get_next_order_number(self, cafe_id: str) -> str:
-        """Calculate next human-readable order number for the café (e.g. #1001)."""
-        count = await self.collection.count_documents({"cafe_id": cafe_id})
-        return f"{1001 + count}"
+        """Atomically generate the next sequential order number for the café (e.g. #1001)."""
+        from pymongo import ReturnDocument
+        doc = await self.counters.find_one_and_update(
+            {"_id": f"order_seq_{cafe_id}"},
+            {"$inc": {"seq": 1}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+        seq = doc.get("seq", 1) if doc else 1
+        return str(1000 + seq)
 
     async def get_dashboard_stats(self, cafe_id: str) -> Dict[str, int]:
         """Fetch live counts for the dashboard. If no orders exist, returns genuine 0s."""

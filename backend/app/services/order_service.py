@@ -117,23 +117,21 @@ class OrderService:
         calculated_items = []
         subtotal = 0.0
 
-        # Pre-fetch addon groups for all requested products if any item has addons
+        # Pre-fetch addon groups for all requested products
         addon_map: Dict[str, Dict[str, Any]] = {}
-        has_addons = any(item.get("addons") for item in requested_items)
-        if has_addons:
-            try:
-                repo = self.addon_repo
-                if repo is None:
-                    db = getattr(self.order_repo.collection, "database", None)
-                    if db is None:
-                        from app.core.database import get_database
-                        db = get_database()
-                    repo = AddonRepository(db)
-                all_addon_groups = await repo.get_for_products(cafe_id, product_ids)
-                for ag in all_addon_groups:
-                    addon_map[ag["addon_group_id"]] = ag
-            except Exception as e:
-                logger.warning(f"Addon lookup during order creation error: {e}")
+        try:
+            repo = self.addon_repo
+            if repo is None:
+                db = getattr(self.order_repo.collection, "database", None)
+                if db is None:
+                    from app.core.database import get_database
+                    db = get_database()
+                repo = AddonRepository(db)
+            all_addon_groups = await repo.get_for_products(cafe_id, product_ids)
+            for ag in all_addon_groups:
+                addon_map[ag["addon_group_id"]] = ag
+        except Exception as e:
+            logger.warning(f"Addon lookup during order creation error: {e}")
 
         for item in requested_items:
             prod_id = item["product_id"]
@@ -155,28 +153,71 @@ class OrderService:
 
             unit_price = float(product["price"])
 
-            # Calculate addon costs (server-authoritative pricing)
+            # Calculate addon costs (server-authoritative pricing) and validate constraints
             addon_selections = []
             addons_total_per_unit = 0.0
+            group_selection_counts: Dict[str, int] = {}
             for addon_sel in (item.get("addons") or []):
                 group_id = addon_sel.get("addon_group_id", "")
                 item_id = addon_sel.get("addon_item_id", "")
                 group = addon_map.get(group_id)
-                if group:
-                    db_item = next(
-                        (ai for ai in group.get("items", []) if ai.get("addon_item_id") == item_id),
-                        None
+                if not group:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid or non-existent add-on group '{group_id}'.",
                     )
-                    if db_item:
-                        addon_price = float(db_item.get("price", 0.0))
-                        addons_total_per_unit += addon_price
-                        addon_selections.append({
-                            "addon_group_id": group_id,
-                            "addon_group_name": group.get("name", ""),
-                            "addon_item_id": item_id,
-                            "addon_item_name": db_item.get("name", ""),
-                            "price": addon_price,
-                        })
+                # Verify add-on group applies to this product (empty product_ids means applies to all)
+                if group.get("product_ids") and prod_id not in group["product_ids"]:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Add-on group '{group.get('name')}' does not apply to product '{product['name']}'.",
+                    )
+
+                db_item = next(
+                    (ai for ai in group.get("items", []) if ai.get("addon_item_id") == item_id),
+                    None
+                )
+                if not db_item:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Option '{item_id}' not found in add-on group '{group.get('name')}'.",
+                    )
+                if not db_item.get("is_available", True):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Add-on '{db_item.get('name')}' is currently unavailable.",
+                    )
+
+                group_selection_counts[group_id] = group_selection_counts.get(group_id, 0) + 1
+                max_allowed = group.get("max_selections", 1)
+                if group_selection_counts[group_id] > max_allowed:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Too many options selected for '{group.get('name')}'. Maximum allowed is {max_allowed}.",
+                    )
+
+                addon_price = float(db_item.get("price", 0.0))
+                addons_total_per_unit += addon_price
+                addon_selections.append({
+                    "addon_group_id": group_id,
+                    "addon_group_name": group.get("name", ""),
+                    "addon_item_id": item_id,
+                    "addon_item_name": db_item.get("name", ""),
+                    "price": addon_price,
+                })
+
+            # Check if any required addon groups for this product were missing
+            for g_id, g_data in addon_map.items():
+                if g_data.get("is_required") or g_data.get("min_selections", 0) > 0:
+                    applies = not g_data.get("product_ids") or prod_id in g_data["product_ids"]
+                    if applies:
+                        count = group_selection_counts.get(g_id, 0)
+                        min_req = max(1 if g_data.get("is_required") else 0, g_data.get("min_selections", 0))
+                        if count < min_req:
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Please select at least {min_req} option for required add-on group '{g_data.get('name')}'.",
+                            )
 
             effective_unit_price = unit_price + addons_total_per_unit
             item_subtotal = round(effective_unit_price * qty, 2)

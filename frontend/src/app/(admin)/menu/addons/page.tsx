@@ -121,7 +121,7 @@ export default function AdminAddonsPage() {
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: keyof AddonItemFormState, value: any) => {
+  const handleItemChange = (index: number, field: keyof AddonItemFormState, value: string | boolean) => {
     setItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );

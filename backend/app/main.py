@@ -81,7 +81,8 @@ if settings.ENVIRONMENT == "development":
     cors_origin_regex = r"^https?://([a-zA-Z0-9-]+\.)?(localhost|127\.0\.0\.1)(:[0-9]+)?$"
 else:
     import re
-    cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)?{re.escape(clean_domain)}$"
+    # Allow production custom domain (and wildcard subdomains) as well as Vercel deployment URLs (*.vercel.app)
+    cors_origin_regex = rf"^https://([a-zA-Z0-9-]+\.)*({re.escape(clean_domain)}|vercel\.app)$"
 
 
 app.add_middleware(

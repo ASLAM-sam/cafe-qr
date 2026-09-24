@@ -21,8 +21,9 @@ def get_database() -> AsyncIOMotorDatabase:
         db_state.client = AsyncIOMotorClient(
             settings.MONGODB_URI,
             serverSelectionTimeoutMS=5000,
-            maxPoolSize=50,
+            maxPoolSize=10,
             minPoolSize=1,
+            maxIdleTimeMS=45000,
         )
         db_state.db = db_state.client[settings.MONGODB_DATABASE]
     return db_state.db
@@ -35,8 +36,9 @@ async def connect_to_mongo():
             db_state.client = AsyncIOMotorClient(
                 settings.MONGODB_URI,
                 serverSelectionTimeoutMS=5000,
-                maxPoolSize=50,
+                maxPoolSize=10,
                 minPoolSize=1,
+                maxIdleTimeMS=45000,
             )
             db_state.db = db_state.client[settings.MONGODB_DATABASE]
         # Ping server
@@ -56,51 +58,66 @@ async def close_mongo_connection():
 
 
 async def create_indexes():
-    """Create essential multi-tenant and unique indexes."""
+    """Create essential multi-tenant and unique compound indexes."""
     if db_state.db is None:
         return
     try:
-        # Cafes: unique subdomain
+        # Cafes: unique subdomain, unique cafe_id
         await db_state.db.cafes.create_indexes([
             IndexModel([("subdomain", ASCENDING)], unique=True, name="idx_cafe_subdomain"),
             IndexModel([("cafe_id", ASCENDING)], unique=True, name="idx_cafe_id"),
         ])
 
-        # Users: unique email, cafe_id
+        # Users: unique username, sparse unique email, cafe_id
         await db_state.db.users.create_indexes([
-            IndexModel([("email", ASCENDING)], unique=True, name="idx_user_email"),
+            IndexModel([("username", ASCENDING)], unique=True, sparse=True, name="idx_user_username"),
+            IndexModel([("email", ASCENDING)], unique=True, sparse=True, name="idx_user_email"),
             IndexModel([("cafe_id", ASCENDING)], name="idx_user_cafe"),
         ])
 
-        # Categories: cafe_id + display_order
+        # Categories: cafe_id + display_order, cafe_id + name
         await db_state.db.categories.create_indexes([
             IndexModel([("cafe_id", ASCENDING)], name="idx_cat_cafe"),
+            IndexModel([("cafe_id", ASCENDING), ("category_id", ASCENDING)], unique=True, name="idx_cat_cafe_id"),
             IndexModel([("cafe_id", ASCENDING), ("name", ASCENDING)], name="idx_cat_cafe_name"),
             IndexModel([("cafe_id", ASCENDING), ("display_order", ASCENDING)], name="idx_cat_order"),
         ])
 
-        # Products: cafe_id + category_id, availability
+        # Products: cafe_id + category_id, cafe_id + availability, unique product_id per cafe
         await db_state.db.products.create_indexes([
             IndexModel([("cafe_id", ASCENDING)], name="idx_prod_cafe"),
+            IndexModel([("cafe_id", ASCENDING), ("product_id", ASCENDING)], unique=True, name="idx_prod_cafe_id"),
             IndexModel([("cafe_id", ASCENDING), ("category_id", ASCENDING)], name="idx_prod_category"),
             IndexModel([("cafe_id", ASCENDING), ("is_available", ASCENDING)], name="idx_prod_avail"),
+            IndexModel([("cafe_id", ASCENDING), ("display_order", ASCENDING)], name="idx_prod_order"),
         ])
 
         # Tables: cafe_id + table_number (unique per cafe), qr_token (globally unique)
         await db_state.db.tables.create_indexes([
             IndexModel([("cafe_id", ASCENDING), ("table_number", ASCENDING)], unique=True, name="idx_table_number"),
             IndexModel([("qr_token", ASCENDING)], unique=True, name="idx_table_token"),
+            IndexModel([("cafe_id", ASCENDING), ("table_id", ASCENDING)], unique=True, name="idx_table_cafe_id"),
             IndexModel([("cafe_id", ASCENDING)], name="idx_table_cafe"),
         ])
 
-        # Orders: cafe_id + order_status, created_at, order_reference (unique), idempotency_key
+        # Orders: cafe_id + order_status, created_at, unique order_reference, unique order_number per cafe, idempotency_key
         await db_state.db.orders.create_indexes([
             IndexModel([("cafe_id", ASCENDING)], name="idx_order_cafe"),
+            IndexModel([("cafe_id", ASCENDING), ("order_number", ASCENDING)], unique=True, name="idx_order_cafe_num"),
             IndexModel([("cafe_id", ASCENDING), ("order_status", ASCENDING)], name="idx_order_status"),
             IndexModel([("cafe_id", ASCENDING), ("created_at", ASCENDING)], name="idx_order_created"),
             IndexModel([("order_reference", ASCENDING)], unique=True, name="idx_order_ref"),
             IndexModel([("cafe_id", ASCENDING), ("idempotency_key", ASCENDING)], sparse=True, name="idx_order_idempotency"),
         ])
+
+        # Addon Groups: cafe_id + addon_group_id (unique), product_ids, display_order
+        await db_state.db.addon_groups.create_indexes([
+            IndexModel([("cafe_id", ASCENDING), ("addon_group_id", ASCENDING)], unique=True, name="idx_addon_cafe_group"),
+            IndexModel([("cafe_id", ASCENDING), ("product_ids", ASCENDING)], name="idx_addon_cafe_prods"),
+            IndexModel([("cafe_id", ASCENDING), ("display_order", ASCENDING)], name="idx_addon_cafe_order"),
+            IndexModel([("cafe_id", ASCENDING)], name="idx_addon_cafe"),
+        ])
+
         logger.info("Ensured all MongoDB multi-tenant indexes.")
     except Exception as e:
         logger.error(f"Error creating MongoDB indexes: {e}")

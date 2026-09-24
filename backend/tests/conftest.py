@@ -93,13 +93,25 @@ class MockAsyncCollection:
         return InsertResult()
 
     async def find_one_and_update(
-        self, query: Dict[str, Any], update: Dict[str, Any], return_document: bool = True, projection: Dict[str, Any] = None
+        self, query: Dict[str, Any], update: Dict[str, Any], return_document: bool = True, projection: Dict[str, Any] = None, upsert: bool = False
     ) -> Optional[Dict[str, Any]]:
         for i, d in enumerate(self.data):
             if self._match(d, query):
                 if "$set" in update:
                     d.update(copy.deepcopy(update["$set"]))
+                if "$inc" in update:
+                    for inc_k, inc_v in update["$inc"].items():
+                        d[inc_k] = d.get(inc_k, 0) + inc_v
                 return copy.deepcopy(d)
+        if upsert:
+            new_doc = copy.deepcopy(query)
+            if "$set" in update:
+                new_doc.update(copy.deepcopy(update["$set"]))
+            if "$inc" in update:
+                for inc_k, inc_v in update["$inc"].items():
+                    new_doc[inc_k] = inc_v
+            self.data.append(new_doc)
+            return copy.deepcopy(new_doc)
         return None
 
     async def delete_one(self, query: Dict[str, Any]):

@@ -147,3 +147,108 @@ async def test_addon_management_and_order_calculation(async_client, auth_headers
         headers=auth_headers_a,
     )
     assert get_after_del.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_addon_validation_rules(async_client, auth_headers_a):
+    """Verify that unavailable addons, selection overflows, and missing required groups are rejected."""
+    # 1. Setup Product
+    cat_res = await async_client.post(
+        "/api/categories",
+        json={"name": "Desserts"},
+        headers=auth_headers_a,
+    )
+    cat_id = cat_res.json()["category_id"]
+
+    prod_res = await async_client.post(
+        "/api/products",
+        json={"category_id": cat_id, "name": "Sundae", "price": 120.0, "is_available": True},
+        headers=auth_headers_a,
+    )
+    prod_id = prod_res.json()["product_id"]
+
+    # 2. Create Required Add-on Group: Size (Single choice, required)
+    size_res = await async_client.post(
+        "/api/addons",
+        json={
+            "name": "Size",
+            "is_required": True,
+            "min_selections": 1,
+            "max_selections": 1,
+            "items": [
+                {"name": "Regular", "price": 0.0, "is_available": True},
+                {"name": "Large", "price": 50.0, "is_available": True},
+                {"name": "Jumbo", "price": 80.0, "is_available": False},  # Out of stock
+            ],
+            "product_ids": [prod_id],
+        },
+        headers=auth_headers_a,
+    )
+    size_group = size_res.json()
+    size_group_id = size_group["addon_group_id"]
+    reg_id = next(it["addon_item_id"] for it in size_group["items"] if it["name"] == "Regular")
+    large_id = next(it["addon_item_id"] for it in size_group["items"] if it["name"] == "Large")
+    jumbo_id = next(it["addon_item_id"] for it in size_group["items"] if it["name"] == "Jumbo")
+
+    # Setup Table
+    tbl_res = await async_client.post(
+        "/api/tables",
+        json={"table_number": "14"},
+        headers=auth_headers_a,
+    )
+    table_token = tbl_res.json()["qr_token"]
+
+    # Test Case A: Ordering unavailable add-on (Jumbo) -> HTTP 400
+    res_unavail = await async_client.post(
+        "/api/public/orders",
+        json={
+            "table_token": table_token,
+            "order_type": "DINE_IN",
+            "items": [
+                {
+                    "product_id": prod_id,
+                    "quantity": 1,
+                    "addons": [{"addon_group_id": size_group_id, "addon_item_id": jumbo_id}],
+                }
+            ],
+        },
+        headers={"X-Tenant-Subdomain": "brewhouse"},
+    )
+    assert res_unavail.status_code == 400
+    assert "unavailable" in res_unavail.json()["detail"].lower()
+
+    # Test Case B: Exceeding max selections (Selecting 2 options when max is 1) -> HTTP 400
+    res_overflow = await async_client.post(
+        "/api/public/orders",
+        json={
+            "table_token": table_token,
+            "order_type": "DINE_IN",
+            "items": [
+                {
+                    "product_id": prod_id,
+                    "quantity": 1,
+                    "addons": [
+                        {"addon_group_id": size_group_id, "addon_item_id": reg_id},
+                        {"addon_group_id": size_group_id, "addon_item_id": large_id},
+                    ],
+                }
+            ],
+        },
+        headers={"X-Tenant-Subdomain": "brewhouse"},
+    )
+    assert res_overflow.status_code == 400
+    assert "maximum" in res_overflow.json()["detail"].lower() or "too many" in res_overflow.json()["detail"].lower()
+
+    # Test Case C: Omitting required add-on group -> HTTP 400
+    res_missing = await async_client.post(
+        "/api/public/orders",
+        json={
+            "table_token": table_token,
+            "order_type": "DINE_IN",
+            "items": [{"product_id": prod_id, "quantity": 1}],
+        },
+        headers={"X-Tenant-Subdomain": "brewhouse"},
+    )
+    assert res_missing.status_code == 400
+    assert "required" in res_missing.json()["detail"].lower()
+
