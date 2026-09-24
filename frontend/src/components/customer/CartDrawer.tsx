@@ -187,7 +187,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
               </span>
             </div>
             <p className="text-[10px] text-slate-400 pt-1">
-              *Final prices and taxes will be validated server-side by the café system.
+              *Final prices and taxes will be validated server-side by the cafe system.
             </p>
           </div>
 

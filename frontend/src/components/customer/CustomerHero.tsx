@@ -28,7 +28,7 @@ export function CustomerHero() {
 
         {/* Cafe Title & Description */}
         <h2 className="text-lg font-bold tracking-tight text-slate-900">
-          {cafe?.name || "Welcome to Our Café"}
+          {cafe?.name || "Welcome to Our Cafe"}
         </h2>
         {cafe?.description && (
           <p className="mt-1 text-xs text-slate-500 line-clamp-2">

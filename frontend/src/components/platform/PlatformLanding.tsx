@@ -31,39 +31,44 @@ interface FAQItem {
 
 const FAQ_ITEMS: FAQItem[] = [
   {
-    question: "Do customers need to download a mobile app to order?",
+    question: "Do customers need an app?",
     answer:
-      "No app download is ever required. Customers simply scan the QR code on their table using the native camera on iOS Safari or Android Chrome. The digital menu opens instantly as a fast, responsive web application directly in their browser.",
+      "No. Customers can scan the QR code and order directly from their phone browser (Safari or Chrome). No app download is ever required.",
   },
   {
-    question: "How does table identification work with QR codes?",
+    question: "How does table ordering work?",
     answer:
-      "Each table is assigned an unguessable 12-character cryptographic token. When a guest scans the QR code, the system securely resolves both the café tenant and the specific table number, automatically binding the order session to that table.",
+      "Every table gets its own secure QR code. When a customer scans the code, their table number is automatically attached to their order.",
   },
   {
-    question: "Can multiple cafés use the platform without data mixing?",
+    question: "Can I manage my menu?",
     answer:
-      "Yes. The platform is architected with strict multi-tenancy. Every database query, category, product, table, and order is strictly isolated by the café's tenant identifier (cafe_id). Café A cannot see or mutate any data belonging to Café B.",
+      "Yes. You can add, edit, or remove menu categories and products at any time from your cafe dashboard.",
   },
   {
-    question: "What is included in the ₹999/month Café QR Pro plan?",
+    question: "Can customers track their orders?",
     answer:
-      "Everything. There are no locked tiers, no upgrade walls, and no hidden fees. You get unlimited menu categories and products, Cloudinary image hosting, table management, high-res printable QR generation, live Ably real-time order updates, customer tracking, and the private Café Admin dashboard.",
+      "Yes. Customers can see the live status of their order from the moment it is placed until it is ready.",
+  },
+  {
+    question: "Can multiple cafes use the platform?",
+    answer:
+      "Yes. Each cafe gets its own account and unique website address. Your menu, orders, tables, and settings are completely private.",
   },
   {
     question: "How are customer payments handled?",
     answer:
-      "To keep the ordering experience fast and free of payment gateway fees or checkout failures, payments are settled directly between the customer and the café (cash or direct UPI at the counter/table). The digital order is placed directly into the manager queue.",
+      "Customers place orders on their phone and pay you directly at the counter or table with cash or UPI. There are no payment gateway fees.",
   },
   {
-    question: "Does the café owner need specialized POS hardware?",
+    question: "Do I need special hardware?",
     answer:
-      "No specialized POS equipment is needed. The Café Admin dashboard runs smoothly on any smartphone, iPad/tablet, laptop, or desktop computer with a modern browser. It automatically plays an alert sound when a new order arrives.",
+      "No. You do not need expensive restaurant computers. You can view and manage orders on any phone, tablet, or laptop.",
   },
   {
-    question: "Can café managers update prices and item availability instantly?",
+    question: "How much does it cost?",
     answer:
-      "Yes. Whenever a product is marked unavailable or its price is updated in the Café Admin dashboard, the change takes effect immediately. The backend validates prices authoritatively upon order submission, preventing stale or tampered client prices.",
+      "₹999 per month. All features are included with no hidden fees or commissions.",
   },
 ];
 
@@ -95,7 +100,7 @@ export function PlatformLanding() {
       </div>
 
       {/* Luxury Sticky Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.13_0.02_280/80%)] backdrop-blur-xl transition-all">
+      <header className="sticky top-0 z-50 w-full border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.13_0.02_280/85%)] backdrop-blur-xl transition-all">
         <div className="w-full max-w-7xl mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Brand Logo & Multi-Tenant Pill */}
           <Link href="/" className="flex items-center gap-3.5 group">
@@ -105,14 +110,14 @@ export function PlatformLanding() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold tracking-tight text-white group-hover:text-purple-200 transition-colors">
-                  Café QR SaaS
+                  Cafe QR SaaS
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.82_0.14_85/35%)] bg-[oklch(0.82_0.14_85/10%)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[oklch(0.82_0.14_85)]">
-                  Multi-Tenant
+                  Multi-Cafe
                 </span>
               </div>
               <span className="text-[11px] font-medium text-[oklch(0.70_0.03_280)] tracking-wide">
-                Production Platform
+                Simple QR Ordering
               </span>
             </div>
           </Link>
@@ -147,7 +152,7 @@ export function PlatformLanding() {
                 size="sm"
                 className="text-[oklch(0.98_0.005_280)] hover:text-white hover:bg-[oklch(0.22_0.03_280)] text-xs font-semibold px-4 h-9 rounded-xl border border-[oklch(1_0_0/8%)]"
               >
-                Café Login
+                Cafe Login
               </Button>
             </Link>
             <Link href="/admin">
@@ -226,7 +231,7 @@ export function PlatformLanding() {
                   variant="outline"
                   className="w-full border-[oklch(1_0_0/12%)] bg-[oklch(0.20_0.025_280)] text-white text-xs h-10 rounded-xl"
                 >
-                  Café Owner Login
+                  Cafe Owner Login
                 </Button>
               </Link>
               <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
@@ -245,7 +250,7 @@ export function PlatformLanding() {
           {/* Eyebrow Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.62_0.27_305/40%)] bg-[oklch(0.62_0.27_305/12%)] px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-md mb-8">
             <Sparkles className="h-4 w-4 text-[oklch(0.82_0.14_85)]" />
-            <span>The Modern QR Ordering Engine for Cafés & Roasteries</span>
+            <span>Modern QR Ordering for Cafes and Roasteries</span>
           </div>
 
           {/* Main Headline */}
@@ -258,9 +263,7 @@ export function PlatformLanding() {
 
           {/* Subtitle */}
           <p className="mt-7 text-base sm:text-lg md:text-xl text-[oklch(0.70_0.03_280)] max-w-3xl mx-auto font-normal leading-relaxed">
-            A high-performance, web-first digital menu and live order management platform.
-            Customers scan table QR codes, browse your menu, and place orders directly from their browser.
-            Zero apps, zero downloads, pure instant speed.
+            Customers scan a QR code, view your menu, add items and place orders from their phone. No app needed.
           </p>
 
           {/* Hero CTAs */}
@@ -274,13 +277,13 @@ export function PlatformLanding() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </a>
-            <a href="#features" className="w-full sm:w-auto">
+            <a href="#how-it-works" className="w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="lg"
                 className="w-full sm:w-auto border-[oklch(1_0_0/15%)] bg-[oklch(0.18_0.025_280)] hover:bg-[oklch(0.22_0.03_280)] text-white font-semibold px-7 h-12 rounded-xl text-sm transition-all"
               >
-                <span>Explore Features</span>
+                <span>See How It Works</span>
               </Button>
             </a>
           </div>
@@ -290,52 +293,52 @@ export function PlatformLanding() {
             <div className="lux-glass rounded-2xl p-5 lux-glass-hover">
               <div className="text-[oklch(0.62_0.27_305)] text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Smartphone className="h-3.5 w-3.5" />
-                <span>Zero App Downloads</span>
+                <span>No App Needed</span>
               </div>
               <div className="text-white font-semibold text-sm">
-                Instant Mobile Web
+                Instant Mobile Ordering
               </div>
               <div className="text-[oklch(0.70_0.03_280)] text-xs mt-1.5 leading-relaxed">
-                Runs instantly on Safari and Chrome via table camera scan.
+                Opens directly in phone browser when scanning the QR code.
               </div>
             </div>
 
             <div className="lux-glass rounded-2xl p-5 lux-glass-hover">
               <div className="text-[oklch(0.55_0.25_270)] text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Radio className="h-3.5 w-3.5" />
-                <span>Real-Time Events</span>
+                <span>Real-Time Orders</span>
               </div>
               <div className="text-white font-semibold text-sm">
-                Ably Order Streams
+                Instant Live Updates
               </div>
               <div className="text-[oklch(0.70_0.03_280)] text-xs mt-1.5 leading-relaxed">
-                Sub-second order delivery and status tracking with reconnect sync.
+                New orders appear in your dashboard instantly with a chime.
               </div>
             </div>
 
             <div className="lux-glass rounded-2xl p-5 lux-glass-hover">
               <div className="text-[oklch(0.82_0.14_85)] text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Server Integrity</span>
+                <span>Secure QR Codes</span>
               </div>
               <div className="text-white font-semibold text-sm">
-                Authoritative Pricing
+                Safe Table Routing
               </div>
               <div className="text-[oklch(0.70_0.03_280)] text-xs mt-1.5 leading-relaxed">
-                Backend looks up database records; client price tampering is impossible.
+                Every table has a unique, secure code that binds the order.
               </div>
             </div>
 
             <div className="lux-glass rounded-2xl p-5 lux-glass-hover">
               <div className="text-[oklch(0.62_0.27_305)] text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <QrCode className="h-3.5 w-3.5" />
-                <span>Cryptographic QR</span>
+                <Layers className="h-3.5 w-3.5" />
+                <span>Multi-Cafe Platform</span>
               </div>
               <div className="text-white font-semibold text-sm">
-                Secure Table Tokens
+                Isolated Cafe Accounts
               </div>
               <div className="text-[oklch(0.70_0.03_280)] text-xs mt-1.5 leading-relaxed">
-                Unguessable 12-char tokens protect and bind table sessions cleanly.
+                Each cafe has its own private menu, tables, and orders.
               </div>
             </div>
           </div>
@@ -348,34 +351,34 @@ export function PlatformLanding() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
               <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                &lt; 2.0s
+                0
               </div>
               <div className="text-xs font-medium text-[oklch(0.70_0.03_280)] mt-1">
-                First Menu Load Time
+                Apps to Download
               </div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-extrabold text-[oklch(0.62_0.27_305)] tracking-tight">
-                100%
+                Live
               </div>
               <div className="text-xs font-medium text-[oklch(0.70_0.03_280)] mt-1">
-                Server-Authoritative Pricing
+                Instant Order Updates
               </div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-extrabold text-[oklch(0.82_0.14_85)] tracking-tight">
-                0
+                100%
               </div>
               <div className="text-xs font-medium text-[oklch(0.70_0.03_280)] mt-1">
-                App Downloads Required
+                Verified Prices in Database
               </div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-extrabold text-[oklch(0.55_0.25_270)] tracking-tight">
-                100%
+                Private
               </div>
               <div className="text-xs font-medium text-[oklch(0.70_0.03_280)] mt-1">
-                Tenant Data Scoping
+                Isolated Cafe Data
               </div>
             </div>
           </div>
@@ -387,13 +390,13 @@ export function PlatformLanding() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.62_0.27_305)]">
-              Product Visual Showcase
+              Product Preview
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2">
-              Designed for Speed & Flawless Execution
+              See How Simple It Works
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm sm:text-base mt-4">
-              Explore the two synchronized sides of Café QR SaaS: the lightning-fast mobile customer ordering menu and the live manager order command terminal.
+              Switch between the live cafe dashboard and the mobile customer menu below.
             </p>
 
             {/* Showcase Toggle Buttons */}
@@ -407,7 +410,7 @@ export function PlatformLanding() {
                     : "text-[oklch(0.70_0.03_280)] hover:text-white"
                 }`}
               >
-                Café Manager Live Terminal
+                Cafe Orders Dashboard
               </button>
               <button
                 type="button"
@@ -418,7 +421,7 @@ export function PlatformLanding() {
                     : "text-[oklch(0.70_0.03_280)] hover:text-white"
                 }`}
               >
-                Customer Mobile Menu
+                Customer Phone Menu
               </button>
             </div>
           </div>
@@ -434,13 +437,13 @@ export function PlatformLanding() {
                     <div className="h-3 w-3 rounded-full bg-amber-500" />
                     <div className="h-3 w-3 rounded-full bg-emerald-500" />
                     <span className="text-xs font-mono text-[oklch(0.70_0.03_280)] ml-2">
-                      brewhouse.cafe-qr.app/orders — Live Order Queue
+                      brewhouse.cafe-qr.app/orders — Live Orders
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                     <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                      Ably Realtime Connected
+                      Real-Time Active
                     </span>
                   </div>
                 </div>
@@ -451,7 +454,7 @@ export function PlatformLanding() {
                   <div className="rounded-2xl border border-[oklch(0.82_0.14_85/30%)] bg-[oklch(0.15_0.022_280)] p-5 relative">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-bold text-[oklch(0.82_0.14_85)] bg-[oklch(0.82_0.14_85/15%)] px-2.5 py-0.5 rounded-full">
-                        PLACED
+                        NEW ORDER
                       </span>
                       <span className="text-xs font-mono text-[oklch(0.70_0.03_280)]">
                         Just now
@@ -474,7 +477,7 @@ export function PlatformLanding() {
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[oklch(1_0_0/8%)] flex items-center justify-between">
-                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total (incl. tax)</span>
+                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total</span>
                       <span className="text-base font-bold text-white">₹703.50</span>
                     </div>
                     <button
@@ -512,7 +515,7 @@ export function PlatformLanding() {
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[oklch(1_0_0/8%)] flex items-center justify-between">
-                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total (incl. tax)</span>
+                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total</span>
                       <span className="text-base font-bold text-white">₹399.00</span>
                     </div>
                     <button
@@ -527,7 +530,7 @@ export function PlatformLanding() {
                   <div className="rounded-2xl border border-emerald-500/30 bg-[oklch(0.15_0.022_280)] p-5">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full">
-                        READY
+                        READY TO SERVE
                       </span>
                       <span className="text-xs font-mono text-[oklch(0.70_0.03_280)]">
                         8 mins ago
@@ -546,7 +549,7 @@ export function PlatformLanding() {
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[oklch(1_0_0/8%)] flex items-center justify-between">
-                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total (incl. tax)</span>
+                      <span className="text-xs text-[oklch(0.70_0.03_280)]">Total</span>
                       <span className="text-base font-bold text-white">₹483.00</span>
                     </div>
                     <button
@@ -564,7 +567,7 @@ export function PlatformLanding() {
                 <div className="flex items-center justify-between pb-4 border-b border-slate-800">
                   <div className="flex items-center gap-2">
                     <Coffee className="h-5 w-5 text-[oklch(0.62_0.27_305)]" />
-                    <span className="font-bold text-white text-sm">Brew House Roastery</span>
+                    <span className="font-bold text-white text-sm">Brew House Cafe</span>
                   </div>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[oklch(0.62_0.27_305/15%)] text-[oklch(0.62_0.27_305)]">
                     Table 04
@@ -574,13 +577,13 @@ export function PlatformLanding() {
                 {/* Category Pills */}
                 <div className="flex gap-2 py-4 overflow-x-auto no-scrollbar">
                   <span className="rounded-full bg-[oklch(0.62_0.27_305)] text-white px-3 py-1 text-xs font-bold">
-                    Specialty Coffee
+                    Coffee
                   </span>
                   <span className="rounded-full bg-slate-800 text-slate-300 px-3 py-1 text-xs font-medium">
-                    Artisanal Teas
+                    Teas
                   </span>
                   <span className="rounded-full bg-slate-800 text-slate-300 px-3 py-1 text-xs font-medium">
-                    Fresh Pastries
+                    Pastries
                   </span>
                 </div>
 
@@ -591,7 +594,7 @@ export function PlatformLanding() {
                   </div>
                   <div className="flex-1">
                     <h4 className="text-sm font-bold text-white">Ethiopian Pourover</h4>
-                    <p className="text-xs text-slate-400 line-clamp-1">Jasmine, peach & citrus notes</p>
+                    <p className="text-xs text-slate-400 line-clamp-1">Fresh brewed coffee</p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm font-extrabold text-white">₹220</span>
                       <button
@@ -610,7 +613,7 @@ export function PlatformLanding() {
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     <div>
                       <div className="text-xs font-bold text-white">Order #1042: PREPARING</div>
-                      <div className="text-[11px] text-emerald-300">Estimated ready in ~3 mins</div>
+                      <div className="text-[11px] text-emerald-300">Your order will be ready soon</div>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-emerald-400" />
@@ -626,13 +629,13 @@ export function PlatformLanding() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.62_0.27_305)]">
-              Core SaaS Architecture
+              Features
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2">
-              Everything Your Café Needs. Nothing It Doesn&apos;t.
+              Everything You Need for Table Ordering
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm sm:text-base mt-4">
-              Built specifically for modern cafés, roasteries, and coffee lounges. No bloated restaurant POS baggage, no waiter hardware, just frictionless ordering.
+              Built specifically for modern cafes. Simple to set up, fast for customers, and easy for your staff.
             </p>
           </div>
 
@@ -643,10 +646,10 @@ export function PlatformLanding() {
                 <QrCode className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Dynamic Table QR Generation
+                Table QR Codes
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Generate high-resolution printable QR codes per table with secure, unguessable 12-char cryptographic tokens. Download instantly as SVG/PNG.
+                Create and download printable QR codes for all your tables. Each table has its own secure code.
               </p>
             </div>
 
@@ -656,10 +659,10 @@ export function PlatformLanding() {
                 <Smartphone className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Mobile-First Digital Menu
+                Digital Phone Menu
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Lightning-fast mobile browsing with categorized pill navigation, high-res photos, sliding cart drawer, and live table binding.
+                Customers browse categories, view product photos, add items to cart, and order from their phone browser.
               </p>
             </div>
 
@@ -669,10 +672,10 @@ export function PlatformLanding() {
                 <Clock className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Real-Time Order Lifecycle
+                Live Order Dashboard
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Enforces a strict state machine: PLACED &rarr; ACCEPTED &rarr; PREPARING &rarr; READY &rarr; COMPLETED with immediate status updates.
+                See incoming orders in real time. Update order status: Placed &rarr; Preparing &rarr; Ready &rarr; Completed.
               </p>
             </div>
 
@@ -682,10 +685,10 @@ export function PlatformLanding() {
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Server-Authoritative Pricing
+                Verified Prices
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Client prices are never trusted. The backend verifies current database prices, item availability, and calculates taxes and subtotals authoritatively.
+                All prices, taxes, and order totals are calculated directly on the server. Customers cannot modify prices.
               </p>
             </div>
 
@@ -695,10 +698,10 @@ export function PlatformLanding() {
                 <Layers className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Strict Multi-Tenant Scoping
+                Multi-Cafe Platform
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                A single production backend serving hundreds of cafés. Every repository query, menu item, and order is strictly isolated by authenticated cafe_id.
+                Manage multiple cafes cleanly. Each cafe has completely private and protected data.
               </p>
             </div>
 
@@ -708,10 +711,10 @@ export function PlatformLanding() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Cloudinary Asset Pipeline
+                Product Photos
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Server-mediated image uploads to tenant-scoped Cloudinary folders. Validates file types and sizes (≤5MB) with automated WebP compression.
+                Upload photos of your food and drinks. Images load quickly on any phone network.
               </p>
             </div>
 
@@ -721,10 +724,10 @@ export function PlatformLanding() {
                 <Radio className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Ably Realtime WebSockets
+                Order Tracking
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Scoped channel tokens deliver instant audio/visual order notifications to the manager dashboard and live status to the customer.
+                Customers see live progress on their screen while waiting for their food and drinks.
               </p>
             </div>
 
@@ -734,10 +737,10 @@ export function PlatformLanding() {
                 <Sliders className="h-5 w-5" />
               </div>
               <h3 className="text-base font-bold text-white mb-2">
-                Real-Time Product Controls
+                Instant Availability
               </h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Instantly toggle item availability (86ing items on the fly), edit descriptions, adjust display orders, and update tax rates in seconds.
+                Mark items as sold out or update prices with one click. Changes appear on customer menus immediately.
               </p>
             </div>
           </div>
@@ -749,13 +752,13 @@ export function PlatformLanding() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.62_0.27_305)]">
-              Operational Workflow
+              How It Works
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2">
-              From Table Scan to Served in 7 Steps
+              Simple 7-Step Flow
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm sm:text-base mt-4">
-              Here is how seamless the order experience is for both your guests and your café team.
+              Here is how simple the ordering process is from start to finish.
             </p>
           </div>
 
@@ -765,9 +768,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 01
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Café is Onboarded</h3>
+              <h3 className="text-base font-bold text-white mb-2">Create your cafe</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                The café receives its branded subdomain (e.g. <code className="text-purple-300 font-mono">brewhouse</code>) and owner account credentials.
+                Your cafe account is created with your own web link and owner login.
               </p>
             </div>
 
@@ -776,9 +779,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 02
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Menu & Tables Setup</h3>
+              <h3 className="text-base font-bold text-white mb-2">Add your menu</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Owner uploads categories, products, photos, prices, and creates dine-in table numbers in the private dashboard.
+                Add food and drink categories, items, prices, and upload photos.
               </p>
             </div>
 
@@ -787,9 +790,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 03
               </div>
-              <h3 className="text-base font-bold text-white mb-2">QR Codes Printed</h3>
+              <h3 className="text-base font-bold text-white mb-2">Create tables and QR codes</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                High-resolution cryptographic QR codes are downloaded, printed, and placed on café tables or counter stands.
+                Print QR codes from your dashboard and place them on your tables.
               </p>
             </div>
 
@@ -798,9 +801,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 04
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Guest Scans QR</h3>
+              <h3 className="text-base font-bold text-white mb-2">Customer scans QR</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Guest scans the table QR with phone camera. Menu opens instantly with their table number securely bound.
+                Customer scans the code with their phone. Your menu opens instantly.
               </p>
             </div>
 
@@ -809,9 +812,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 05
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Order is Placed</h3>
+              <h3 className="text-base font-bold text-white mb-2">Customer places order</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Customer selects items and submits cart. Server calculates prices, subtotal, and tax authoritatively.
+                Customer selects items and sends the order directly from their phone.
               </p>
             </div>
 
@@ -820,9 +823,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 06
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Manager Receives Live</h3>
+              <h3 className="text-base font-bold text-white mb-2">Cafe receives the order</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                Order lands on the Café Admin dashboard in sub-second time via Ably real-time event with audio alert.
+                The order appears instantly on your cafe dashboard with an alert sound.
               </p>
             </div>
 
@@ -831,9 +834,9 @@ export function PlatformLanding() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.82_0.14_85)] text-white font-extrabold text-base mb-4 shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                 07
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Real-Time Status Tracking</h3>
+              <h3 className="text-base font-bold text-white mb-2">Customer tracks the order</h3>
               <p className="text-xs text-[oklch(0.70_0.03_280)] leading-relaxed">
-                As the barista advances the order to ACCEPTED &rarr; PREPARING &rarr; READY, the customer sees the progress live in their tracking modal without refreshing.
+                When you accept and prepare the food, the customer sees the status change on their screen in real time.
               </p>
             </div>
           </div>
@@ -845,19 +848,18 @@ export function PlatformLanding() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.82_0.14_85)]">
-              Interactive Test Drive
+              Live Demo
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2">
-              Experience the Real Platform Live
+              Test Drive the System
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm sm:text-base mt-4">
-              Test drive the actual customer ordering website and the café manager dashboard right now.
-              Choose one of our active demo tenants below or enter any café slug.
+              Try the real customer ordering experience and the cafe dashboard right now.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Demo Café 1 */}
+            {/* Demo Cafe 1 */}
             <div className="lux-glass rounded-3xl p-8 flex flex-col justify-between lux-glass-hover">
               <div>
                 <div className="flex items-center justify-between mb-5">
@@ -870,16 +872,16 @@ export function PlatformLanding() {
                         Brew House Roastery
                       </h3>
                       <p className="text-xs text-[oklch(0.70_0.03_280)]">
-                        Subdomain: <code className="text-purple-300 font-mono">brewhouse</code>
+                        Link: <code className="text-purple-300 font-mono">brewhouse</code>
                       </p>
                     </div>
                   </div>
                   <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-400">
-                    Active Tenant
+                    Active Cafe
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed mb-8">
-                  Artisanal specialty coffee roastery featuring single-origin pourovers, cold brews, espresso drinks, and gourmet toasts. Table QR ordering active.
+                  Specialty coffee cafe featuring pourovers, cold brews, and baked snacks. Test customer ordering and table management.
                 </p>
               </div>
 
@@ -895,12 +897,12 @@ export function PlatformLanding() {
                   href="/dashboard?cafe=brewhouse"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[oklch(0.20_0.025_280)] hover:bg-[oklch(0.24_0.03_280)] text-slate-200 font-semibold text-xs py-3 transition-colors border border-[oklch(1_0_0/10%)]"
                 >
-                  <span>Café Dashboard</span>
+                  <span>Cafe Dashboard</span>
                 </Link>
               </div>
             </div>
 
-            {/* Demo Café 2 */}
+            {/* Demo Cafe 2 */}
             <div className="lux-glass rounded-3xl p-8 flex flex-col justify-between lux-glass-hover">
               <div>
                 <div className="flex items-center justify-between mb-5">
@@ -910,19 +912,19 @@ export function PlatformLanding() {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white">
-                        Mocha Café &amp; Lounge
+                        Mocha Cafe &amp; Lounge
                       </h3>
                       <p className="text-xs text-[oklch(0.70_0.03_280)]">
-                        Subdomain: <code className="text-purple-300 font-mono">mochacafe</code>
+                        Link: <code className="text-purple-300 font-mono">mochacafe</code>
                       </p>
                     </div>
                   </div>
                   <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-400">
-                    Active Tenant
+                    Active Cafe
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed mb-8">
-                  Cozy neighborhood café with artisanal teas, baked pastries, and quick table-side ordering. Fully configured with tax rates and table tokens.
+                  Neighborhood cafe with teas, coffees, and snacks. Configured with table QR codes and dine-in seating.
                 </p>
               </div>
 
@@ -938,13 +940,13 @@ export function PlatformLanding() {
                   href="/dashboard?cafe=mochacafe"
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[oklch(0.20_0.025_280)] hover:bg-[oklch(0.24_0.03_280)] text-slate-200 font-semibold text-xs py-3 transition-colors border border-[oklch(1_0_0/10%)]"
                 >
-                  <span>Café Dashboard</span>
+                  <span>Cafe Dashboard</span>
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* Direct Custom Café Slug Launcher */}
+          {/* Direct Custom Cafe Slug Launcher */}
           <div className="mt-10 max-w-lg mx-auto">
             <form
               onSubmit={handleLaunchCustomCafe}
@@ -952,7 +954,7 @@ export function PlatformLanding() {
             >
               <input
                 type="text"
-                placeholder="Enter any café subdomain (e.g. urbanbeans)"
+                placeholder="Enter any cafe name (e.g. urbanbeans)"
                 value={customSlug}
                 onChange={(e) => setCustomSlug(e.target.value)}
                 className="flex-1 bg-transparent px-4 py-2 text-xs text-white placeholder-[oklch(0.70_0.03_280)] focus:outline-hidden"
@@ -962,7 +964,7 @@ export function PlatformLanding() {
                 size="sm"
                 className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold text-xs px-5 h-9 rounded-xl shadow-sm"
               >
-                Launch
+                Open Cafe
               </Button>
             </form>
           </div>
@@ -974,13 +976,13 @@ export function PlatformLanding() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.82_0.14_85)]">
-              Simple &amp; Transparent
+              Pricing
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2">
-              One Plan. Everything Included.
+              One Simple Plan
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm sm:text-base mt-4">
-              No hidden tiers, no surprise fees, and no per-order commissions. Get the complete Café QR SaaS engine for one flat monthly price.
+              Everything you need to run QR ordering for your cafe.
             </p>
           </div>
 
@@ -988,21 +990,21 @@ export function PlatformLanding() {
           <div className="max-w-4xl mx-auto lux-glass rounded-3xl p-8 sm:p-12 border-2 border-[oklch(0.62_0.27_305/45%)] shadow-2xl shadow-[oklch(0.62_0.27_305/12%)] relative overflow-hidden">
             {/* Top Metallic Gold Badge */}
             <div className="absolute top-0 right-8 -translate-y-1/2 rounded-full border border-[oklch(0.82_0.14_85/40%)] bg-[oklch(0.82_0.14_85)] text-slate-950 px-4 py-1 text-[11px] font-extrabold uppercase tracking-wider shadow-md">
-              ALL-INCLUSIVE PRO
+              ALL-IN-ONE
             </div>
 
             <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-8 border-b border-[oklch(1_0_0/10%)] gap-6">
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                    CAFÉ QR PRO
+                    Cafe QR
                   </h3>
                   <span className="rounded-full bg-[oklch(0.62_0.27_305/15%)] text-[oklch(0.62_0.27_305)] border border-[oklch(0.62_0.27_305/30%)] px-3 py-0.5 text-xs font-bold">
-                    Full Feature Suite
+                    Full Features
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-[oklch(0.70_0.03_280)] mt-2 max-w-xl">
-                  Ideal for boutique coffee shops, roasteries, and multi-table café lounges seeking a fast, self-contained digital ordering experience.
+                  Everything you need to run QR ordering for your cafe.
                 </p>
               </div>
 
@@ -1014,7 +1016,7 @@ export function PlatformLanding() {
                   </span>
                 </div>
                 <div className="text-xs text-[oklch(0.82_0.14_85)] font-semibold mt-1">
-                  Flat monthly pricing &bull; No per-transaction cut
+                  Flat monthly price &bull; No per-order commission
                 </div>
               </div>
             </div>
@@ -1022,73 +1024,73 @@ export function PlatformLanding() {
             {/* Checklist of REAL Implemented Features */}
             <div className="mt-8">
               <div className="text-xs font-bold uppercase tracking-wider text-[oklch(0.62_0.27_305)] mb-6">
-                All Included Features &bull; Zero Feature Locks
+                Included with Cafe QR
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-8 text-xs text-slate-200">
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Digital QR Table Ordering System</span>
+                  <span>QR menu for all tables</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Unlimited Menu Categories &amp; Products</span>
+                  <span>Menu management</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Product Availability &amp; Price Toggles</span>
+                  <span>Product management</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Cloudinary Media Asset Optimization</span>
+                  <span>Product images</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Cryptographic 12-Character Table Tokens</span>
+                  <span>Table management</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>High-Resolution Printable QR Codes</span>
+                  <span>QR code generation</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Live Manager Order Command Dashboard</span>
+                  <span>Real-time orders</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Complete Order State Machine Lifecycle</span>
+                  <span>Order tracking for customers</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Live Customer Order Tracking Modal</span>
+                  <span>Cafe admin dashboard</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Ably Real-Time WebSocket Notifications</span>
+                  <span>Secure login</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Server-Authoritative Price &amp; Tax Calculation</span>
+                  <span>Order history</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Order Idempotency Key Deduplication</span>
+                  <span>Mobile ordering</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Strict Multi-Tenant Database Isolation</span>
+                  <span>Multi-cafe platform</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Branded Café Subdomain &amp; Settings</span>
+                  <span>Secure QR codes for each table</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Responsive Mobile, Tablet &amp; Desktop UI</span>
+                  <span>Cloud image storage</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[oklch(0.62_0.27_305)] shrink-0 mt-0.5" />
-                  <span>Zero Customer App Downloads Required</span>
+                  <span>Tenant data protection</span>
                 </div>
               </div>
             </div>
@@ -1096,14 +1098,14 @@ export function PlatformLanding() {
             {/* Bottom Action Area */}
             <div className="mt-10 pt-8 border-t border-[oklch(1_0_0/10%)] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xs text-[oklch(0.70_0.03_280)] text-center sm:text-left">
-                Direct onboarding via Platform Admin. Ready to activate your café in minutes.
+                Start taking digital orders today.
               </div>
               <Link href="/admin" className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] hover:opacity-95 text-white font-bold text-xs px-8 h-11 rounded-xl shadow-lg shadow-[oklch(0.62_0.27_305/25%)]"
                 >
-                  <span>Get Started with Café QR</span>
+                  <span>Get Started</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
@@ -1117,13 +1119,13 @@ export function PlatformLanding() {
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.62_0.27_305)]">
-              Frequently Asked Questions
+              FAQ
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
-              Everything You Need to Know
+              Common Questions
             </h2>
             <p className="text-[oklch(0.70_0.03_280)] text-sm mt-3">
-              Honest and factual details about our multi-tenant café QR ordering architecture.
+              Simple answers about how the Cafe QR platform works.
             </p>
           </div>
 
@@ -1169,10 +1171,10 @@ export function PlatformLanding() {
             <Coffee className="h-7 w-7" />
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Ready to Upgrade Your Café&apos;s Ordering?
+            Ready to Start Table Ordering?
           </h2>
           <p className="text-sm sm:text-base text-[oklch(0.70_0.03_280)] max-w-2xl mx-auto mt-4 leading-relaxed">
-            Eliminate ordering bottlenecks, speed up table turns, and give your guests a fluid, app-free digital ordering experience.
+            Give your customers an instant, app-free digital ordering experience.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1181,7 +1183,7 @@ export function PlatformLanding() {
                 size="lg"
                 className="w-full sm:w-auto bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] hover:opacity-95 text-white font-bold text-xs px-8 h-12 rounded-xl shadow-xl shadow-[oklch(0.62_0.27_305/25%)]"
               >
-                <span>Launch Interactive Demo</span>
+                <span>Try Live Demo</span>
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </a>
@@ -1191,7 +1193,7 @@ export function PlatformLanding() {
                 size="lg"
                 className="w-full sm:w-auto border-[oklch(1_0_0/15%)] bg-[oklch(0.18_0.025_280)] hover:bg-[oklch(0.22_0.03_280)] text-white font-semibold text-xs px-8 h-12 rounded-xl"
               >
-                <span>Platform Admin Portal</span>
+                <span>Platform Admin</span>
               </Button>
             </Link>
           </div>
@@ -1207,8 +1209,8 @@ export function PlatformLanding() {
                 <Coffee className="h-4 w-4" />
               </div>
               <div>
-                <span className="font-bold text-white text-sm">Café QR SaaS</span>
-                <span className="text-[oklch(0.70_0.03_280)] ml-2">&mdash; Single Platform, Infinite Cafés</span>
+                <span className="font-bold text-white text-sm">Cafe QR SaaS</span>
+                <span className="text-[oklch(0.70_0.03_280)] ml-2">&mdash; Single Platform, Infinite Cafes</span>
               </div>
             </div>
 
@@ -1223,10 +1225,10 @@ export function PlatformLanding() {
                 Live Demo
               </a>
               <a href="#pricing" className="hover:text-white transition-colors">
-                Pricing (₹999)
+                Pricing
               </a>
               <Link href="/login" className="hover:text-white transition-colors">
-                Café Login
+                Cafe Login
               </Link>
               <Link href="/admin" className="text-purple-300 hover:text-purple-200 transition-colors font-semibold">
                 Platform Admin
@@ -1236,7 +1238,7 @@ export function PlatformLanding() {
 
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[oklch(0.70_0.03_280)]">
             <div>
-              &copy; {new Date().getFullYear()} Café QR SaaS Platform. Multi-Tenant Architecture. Built with Next.js 16 &amp; FastAPI.
+              &copy; {new Date().getFullYear()} Cafe QR SaaS Platform. Multi-Cafe Architecture. Built with Next.js 16 &amp; FastAPI.
             </div>
             <div className="flex items-center gap-4">
               <span>Next.js 16</span>

@@ -297,16 +297,16 @@ export default function AdminProductsPage() {
           onAction={categories.length > 0 ? handleOpenCreate : undefined}
         />
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-          <div className="divide-y divide-slate-100">
+        <div className="rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] overflow-hidden shadow-xl">
+          <div className="divide-y divide-[oklch(1_0_0/6%)]">
             {products.map((product) => (
               <div
                 key={product.product_id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-slate-50/60 transition"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-[oklch(0.20_0.025_280)] transition"
               >
                 <div className="flex items-start sm:items-center gap-3">
                   {/* Product Image Preview */}
-                  <div className="h-14 w-14 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="h-14 w-14 rounded-xl bg-[oklch(0.15_0.022_280)] border border-[oklch(1_0_0/10%)] overflow-hidden shrink-0 flex items-center justify-center">
                     {product.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -315,40 +315,40 @@ export default function AdminProductsPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <ImageIcon className="h-6 w-6 text-slate-400" />
+                      <ImageIcon className="h-6 w-6 text-[oklch(0.70_0.03_280)]" />
                     )}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-slate-900">
+                      <h4 className="text-sm font-semibold text-white">
                         {product.name}
                       </h4>
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                      <span className="rounded-md bg-[oklch(0.22_0.03_280)] border border-[oklch(1_0_0/8%)] px-2 py-0.5 text-[11px] font-medium text-purple-200">
                         {getCategoryName(product.category_id)}
                       </span>
                       {product.is_available ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
                           <CheckCircle className="h-3 w-3" />
                           In Stock
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-[oklch(0.70_0.03_280)] font-medium">
                           <XCircle className="h-3 w-3" />
                           Unavailable
                         </span>
                       )}
                     </div>
                     {product.description && (
-                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1 max-w-md">
+                      <p className="mt-0.5 text-xs text-[oklch(0.70_0.03_280)] line-clamp-1 max-w-md">
                         {product.description}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  <span className="text-sm font-bold text-slate-900">
+                <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-[oklch(1_0_0/8%)]">
+                  <span className="text-sm font-bold text-white">
                     {formatCurrency(product.price)}
                   </span>
 
@@ -358,7 +358,7 @@ export default function AdminProductsPage() {
                       variant="ghost"
                       onClick={() => handleToggleAvailability(product)}
                       title={product.is_available ? "Mark as unavailable" : "Mark as available"}
-                      className="text-xs"
+                      className="text-xs text-purple-300 hover:text-white hover:bg-[oklch(0.22_0.03_280)]"
                     >
                       {product.is_available ? "Disable" : "Enable"}
                     </Button>
@@ -367,7 +367,7 @@ export default function AdminProductsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleOpenEdit(product)}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 border-[oklch(1_0_0/10%)] bg-[oklch(0.20_0.025_280)] text-white hover:bg-[oklch(0.24_0.03_280)]"
                       title="Edit product"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
@@ -378,7 +378,7 @@ export default function AdminProductsPage() {
                       variant="ghost"
                       onClick={() => handleDelete(product.product_id)}
                       disabled={deletingProductId === product.product_id}
-                      className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                      className="h-8 w-8 p-0 text-rose-400 hover:bg-rose-500/10"
                       title="Delete product"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

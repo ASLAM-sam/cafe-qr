@@ -32,7 +32,7 @@ export function CustomerHeader() {
           )}
           <div className="truncate">
             <h1 className="text-sm font-bold text-slate-900 truncate tracking-tight">
-              {cafe?.name || "Café Menu"}
+              {cafe?.name || "Cafe Menu"}
             </h1>
           </div>
         </div>

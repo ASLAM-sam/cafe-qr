@@ -45,7 +45,7 @@ const NAV_ITEMS = [
 export function AdminSidebar({
   isOpen = false,
   onClose,
-  cafeName = "Café Admin",
+  cafeName = "Cafe Admin",
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -84,22 +84,22 @@ export function AdminSidebar({
       {/* Sidebar Container */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static",
+          "fixed top-0 bottom-0 left-0 z-40 flex w-64 flex-col border-r border-[oklch(1_0_0/8%)] bg-[oklch(0.15_0.022_280)] text-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
+        <div className="flex h-16 items-center justify-between border-b border-[oklch(1_0_0/8%)] px-5">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-md shadow-[oklch(0.62_0.27_305/20%)] shrink-0">
               <Coffee className="h-4 w-4" />
             </div>
             <div className="truncate">
-              <h2 className="text-sm font-bold text-slate-900 truncate">
+              <h2 className="text-sm font-bold text-white truncate">
                 {cafeName}
               </h2>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-                Management
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[oklch(0.70_0.03_280)]">
+                Cafe Admin
               </span>
             </div>
           </div>
@@ -108,7 +108,7 @@ export function AdminSidebar({
           {onClose && (
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"
+              className="rounded-lg p-1 text-[oklch(0.70_0.03_280)] hover:bg-[oklch(0.20_0.025_280)] hover:text-white lg:hidden"
               aria-label="Close sidebar"
             >
               <X className="h-5 w-5" />
@@ -122,7 +122,7 @@ export function AdminSidebar({
             if (item.children) {
               return (
                 <div key={item.label} className="pt-2">
-                  <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-[oklch(0.70_0.03_280)]">
                     {item.label}
                   </span>
                   <div className="mt-1 space-y-1">
@@ -135,10 +135,10 @@ export function AdminSidebar({
                           href={getHref(child.href)}
                           onClick={onClose}
                           className={cn(
-                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-150",
+                            "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150",
                             isActive
-                              ? "bg-slate-900 text-white shadow-xs"
-                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              ? "bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-md shadow-[oklch(0.62_0.27_305/20%)] font-bold"
+                              : "text-[oklch(0.70_0.03_280)] hover:bg-[oklch(0.20_0.025_280)] hover:text-white"
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
@@ -159,10 +159,10 @@ export function AdminSidebar({
                 href={getHref(item.href)}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-150",
+                  "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150",
                   isActive
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-md shadow-[oklch(0.62_0.27_305/20%)] font-bold"
+                    : "text-[oklch(0.70_0.03_280)] hover:bg-[oklch(0.20_0.025_280)] hover:text-white"
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -173,10 +173,10 @@ export function AdminSidebar({
         </nav>
 
         {/* Footer with Logout */}
-        <div className="border-t border-slate-200 p-4">
+        <div className="border-t border-[oklch(1_0_0/8%)] p-4">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>

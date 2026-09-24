@@ -163,16 +163,16 @@ export default function AdminOrdersPage() {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-slate-200 pb-3 no-scrollbar">
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[oklch(1_0_0/8%)] pb-3 no-scrollbar">
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value}
             onClick={() => setSelectedFilter(f.value)}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 shrink-0",
+              "rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 shrink-0",
               selectedFilter === f.value
-                ? "bg-slate-900 text-white shadow-2xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                ? "bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-md shadow-[oklch(0.62_0.27_305/20%)] font-bold"
+                : "bg-[oklch(0.18_0.025_280)] text-[oklch(0.70_0.03_280)] border border-[oklch(1_0_0/8%)] hover:bg-[oklch(0.22_0.03_280)] hover:text-white"
             )}
           >
             {f.label}
@@ -205,27 +205,27 @@ export default function AdminOrdersPage() {
             <div
               key={order.order_id}
               onClick={() => setSelectedOrder(order)}
-              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-slate-300 transition cursor-pointer gap-3"
+              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] p-4 shadow-xl hover:border-[oklch(0.62_0.27_305/40%)] transition cursor-pointer gap-3"
             >
               <div className="flex items-start sm:items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 font-bold text-xs shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[oklch(0.62_0.27_305/15%)] border border-[oklch(0.62_0.27_305/30%)] text-purple-200 font-bold text-xs shrink-0">
                   #{order.order_number}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-900">
+                    <span className="text-xs font-bold text-white">
                       {order.table_number ? `Table ${order.table_number}` : "Takeaway"}
                     </span>
                     <Badge status={order.order_status} />
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-[oklch(0.70_0.03_280)]">
                     {order.items.map((i) => `${i.quantity}x ${i.product_name}`).join(", ")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                <span className="text-sm font-bold text-slate-900">
+              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[oklch(1_0_0/8%)]">
+                <span className="text-sm font-bold text-white">
                   {formatCurrency(order.total)}
                 </span>
                 {order.order_status === "PLACED" && (

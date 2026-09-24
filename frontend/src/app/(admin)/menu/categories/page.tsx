@@ -162,34 +162,34 @@ export default function AdminCategoriesPage() {
           onAction={handleOpenCreate}
         />
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-          <div className="divide-y divide-slate-100">
+        <div className="rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] overflow-hidden shadow-xl">
+          <div className="divide-y divide-[oklch(1_0_0/6%)]">
             {categories.map((category) => (
               <div
                 key={category.category_id}
-                className="flex items-center justify-between p-4 hover:bg-slate-50/60 transition"
+                className="flex items-center justify-between p-4 hover:bg-[oklch(0.20_0.025_280)] transition"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 font-bold text-xs shrink-0">
-                    <Layers className="h-5 w-5 text-slate-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[oklch(0.62_0.27_305/15%)] text-purple-300 font-bold text-xs shrink-0">
+                    <Layers className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-slate-900">
+                      <h4 className="text-sm font-semibold text-white">
                         {category.name}
                       </h4>
                       {category.is_active ? (
-                        <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 border border-emerald-200">
+                        <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400 border border-emerald-500/30">
                           Active
                         </span>
                       ) : (
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                        <span className="rounded-md bg-[oklch(0.22_0.03_280)] px-2 py-0.5 text-[11px] font-medium text-[oklch(0.70_0.03_280)]">
                           Hidden
                         </span>
                       )}
                     </div>
                     {category.description && (
-                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                      <p className="mt-0.5 text-xs text-[oklch(0.70_0.03_280)] line-clamp-1">
                         {category.description}
                       </p>
                     )}
@@ -201,7 +201,7 @@ export default function AdminCategoriesPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleOpenEdit(category)}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 border-[oklch(1_0_0/10%)] bg-[oklch(0.20_0.025_280)] text-white hover:bg-[oklch(0.24_0.03_280)]"
                     title="Edit category"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
@@ -212,7 +212,7 @@ export default function AdminCategoriesPage() {
                     variant="ghost"
                     onClick={() => handleDelete(category.category_id)}
                     disabled={deletingCatId === category.category_id}
-                    className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                    className="h-8 w-8 p-0 text-rose-400 hover:bg-rose-500/10"
                     title="Delete category"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

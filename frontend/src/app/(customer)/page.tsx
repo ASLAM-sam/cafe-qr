@@ -59,7 +59,7 @@ export default function CustomerMenuPage() {
         setProducts([]);
       }
     } catch {
-      setError("Unable to connect to the café menu service. Please try again.");
+      setError("Unable to connect to the cafe menu service. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -123,8 +123,8 @@ export default function CustomerMenuPage() {
             }
             description={
               selectedCategoryId
-                ? "Items for this category will appear here once added by the café."
-                : "The café has not added any menu items yet. Please check back shortly."
+                ? "Items for this category will appear here once added by the cafe."
+                : "The cafe has not added any menu items yet. Please check back shortly."
             }
             actionLabel={selectedCategoryId ? "View All Items" : undefined}
             onAction={

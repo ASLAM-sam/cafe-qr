@@ -24,35 +24,35 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://cafe-qr-seven.vercel.app"),
   title: {
-    default: "Café QR SaaS — Multi-Tenant QR Table Ordering Platform",
-    template: "%s | Café QR SaaS",
+    default: "Cafe QR SaaS — Simple QR Table Ordering for Cafes",
+    template: "%s | Cafe QR SaaS",
   },
   description:
-    "High-performance digital menu and QR ordering platform for cafés & roasteries. Guests scan table QR codes, order from their browser with zero app downloads, while managers receive live orders with sub-second real-time sync.",
+    "Simple QR ordering for your cafe. Let customers scan a QR code, view your menu, add items and place orders from their phone. No app needed.",
   keywords: [
-    "café QR ordering",
+    "cafe QR ordering",
     "digital menu",
     "table ordering system",
     "QR menu SaaS",
-    "restaurant QR ordering",
-    "contactless café menu",
-    "multi-tenant ordering platform",
+    "contactless cafe menu",
+    "cafe orders",
+    "multi-cafe platform",
   ],
-  authors: [{ name: "Café QR SaaS Platform" }],
+  authors: [{ name: "Cafe QR SaaS Platform" }],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://cafe-qr-seven.vercel.app",
-    siteName: "Café QR SaaS",
-    title: "Café QR SaaS — Turn Every Table Into an Instant Ordering Experience",
+    siteName: "Cafe QR SaaS",
+    title: "Cafe QR SaaS — Turn Every Table Into an Instant Ordering Experience",
     description:
-      "Web-first digital menu and live order management for cafés. No app downloads, cryptographic table tokens, server-verified pricing, and real-time order tracking.",
+      "Customers scan a QR code, view your menu, add items and place orders from their phone. See new orders instantly in your dashboard.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Café QR SaaS — Turn Every Table Into an Instant Ordering Experience",
+    title: "Cafe QR SaaS — Turn Every Table Into an Instant Ordering Experience",
     description:
-      "Web-first digital menu and live order management for modern cafés & roasteries.",
+      "Simple QR table ordering for modern cafes. No app needed.",
   },
   robots: {
     index: true,

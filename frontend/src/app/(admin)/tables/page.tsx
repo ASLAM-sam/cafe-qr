@@ -147,19 +147,19 @@ export default function AdminTablesPage() {
           {tables.map((table) => (
             <div
               key={table.table_id}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between"
+              className="rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] p-5 shadow-xl hover:border-[oklch(0.62_0.27_305/40%)] transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-bold text-xs">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold text-xs shadow-md shadow-[oklch(0.62_0.27_305/20%)]">
                       {table.table_number}
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-900">
+                      <h4 className="text-sm font-semibold text-white">
                         Table {table.table_number}
                       </h4>
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <span className="text-[11px] text-[oklch(0.70_0.03_280)] font-mono">
                         Token: {table.qr_token.substring(0, 10)}...
                       </span>
                     </div>
@@ -170,7 +170,7 @@ export default function AdminTablesPage() {
                     variant="ghost"
                     onClick={() => handleDelete(table.table_id)}
                     disabled={deletingTableId === table.table_id}
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600"
+                    className="h-8 w-8 p-0 text-[oklch(0.70_0.03_280)] hover:text-rose-400 hover:bg-rose-500/10"
                     title="Delete table"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -178,11 +178,11 @@ export default function AdminTablesPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div className="pt-4 border-t border-[oklch(1_0_0/8%)] flex items-center justify-between gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-1.5 flex-1 text-xs"
+                  className="gap-1.5 flex-1 text-xs border-[oklch(1_0_0/10%)] bg-[oklch(0.20_0.025_280)] text-white hover:bg-[oklch(0.24_0.03_280)]"
                   onClick={() => setSelectedTableForQr(table)}
                 >
                   <QrCode className="h-3.5 w-3.5" />
@@ -193,7 +193,7 @@ export default function AdminTablesPage() {
                   href={`/t/${table.qr_token}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border border-[oklch(1_0_0/10%)] text-xs font-semibold text-[oklch(0.70_0.03_280)] hover:text-white hover:bg-[oklch(0.22_0.03_280)] transition"
                   title="Test customer table ordering URL"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -228,8 +228,8 @@ export default function AdminTablesPage() {
             autoFocus
           />
 
-          <p className="text-[11px] text-slate-500">
-            A cryptographically unguessable QR token will be generated automatically for this table.
+          <p className="text-[11px] text-[oklch(0.70_0.03_280)]">
+            A unique and secure QR code will be generated for this table.
           </p>
 
           <div className="pt-2 flex gap-2">

@@ -40,7 +40,7 @@ export default function AdminLayout({
         }
 
         if (user.role === "PLATFORM_ADMIN") {
-          // Case 2: Platform Admin attempting to access café owner dashboard -> Redirect to /admin
+          // Case 2: Platform Admin attempting to access cafe owner dashboard -> Redirect to /admin
           router.replace("/admin");
           return;
         }
@@ -75,11 +75,11 @@ export default function AdminLayout({
   // Case 5: Authentication check still loading -> Show loading state
   if (isAuthLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-[oklch(0.13_0.02_280)] text-white">
         <div className="flex flex-col items-center gap-2.5">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-          <div className="text-xs font-semibold text-slate-500">
-            Verifying café administrator permissions...
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-[oklch(0.62_0.27_305)] border-t-transparent" />
+          <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)]">
+            Loading cafe dashboard...
           </div>
         </div>
       </div>
@@ -89,11 +89,11 @@ export default function AdminLayout({
   const dynamicCafeName =
     cafe?.name ||
     (subdomain
-      ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Café`
-      : "Café Admin");
+      ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Cafe`
+      : "Cafe Admin");
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[oklch(0.13_0.02_280)] text-[oklch(0.98_0.005_280)] selection:bg-[oklch(0.62_0.27_305)] selection:text-white">
       {/* Sidebar navigation */}
       <AdminSidebar
         isOpen={isSidebarOpen}
@@ -106,7 +106,7 @@ export default function AdminLayout({
         <AdminHeader
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           cafeName={dynamicCafeName}
-          userName={currentUser?.name || "Café Owner"}
+          userName={currentUser?.name || "Cafe Owner"}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">

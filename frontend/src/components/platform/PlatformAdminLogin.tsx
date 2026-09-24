@@ -60,10 +60,10 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
             <ShieldCheck className="h-7 w-7" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Platform Administration
+            Platform Admin
           </h1>
           <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
-            Secure management console for multi-tenant café provisioning
+            Sign in to manage all cafes on your platform
           </p>
         </div>
 
@@ -72,14 +72,14 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
           <div className="flex items-center justify-between pb-5 border-b border-[oklch(1_0_0/8%)] mb-6">
             <div>
               <h2 className="text-base font-bold text-white">
-                Platform Owner Sign In
+                Platform Admin Login
               </h2>
               <p className="text-[11px] text-[oklch(0.70_0.03_280)] mt-0.5">
-                Restricted to authorized SaaS administrators
+                Enter your username and password to continue
               </p>
             </div>
             <span className="rounded-full bg-[oklch(0.82_0.14_85/15%)] border border-[oklch(0.82_0.14_85/35%)] px-2.5 py-0.5 text-[10px] font-bold text-[oklch(0.82_0.14_85)] uppercase tracking-wider">
-              Root Access
+              Admin
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
                 htmlFor="username"
                 className="block text-xs font-semibold text-slate-300 mb-1.5"
               >
-                Administrator Username
+                Username
               </label>
               <input
                 id="username"
@@ -140,11 +140,11 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Verifying Credentials...</span>
+                    <span>Signing in...</span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    <span>Authenticate Platform</span>
+                    <span>Sign In</span>
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
@@ -154,7 +154,7 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
         </div>
 
         <div className="mt-8 text-center text-xs text-[oklch(0.70_0.03_280)]">
-          Café QR SaaS &mdash; Single Platform, Infinite Cafés
+          Cafe QR SaaS &mdash; Manage all your cafes easily
         </div>
       </div>
     </div>

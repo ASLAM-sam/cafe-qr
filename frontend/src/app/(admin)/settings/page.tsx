@@ -44,7 +44,7 @@ export default function AdminSettingsPage() {
           }
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to load café settings.";
+        const msg = err instanceof Error ? err.message : "Failed to load cafe settings.";
         setErrorMessage(msg);
       } finally {
         setIsLoading(false);
@@ -74,7 +74,7 @@ export default function AdminSettingsPage() {
       });
 
       setCafe(updated);
-      showToast("success", "Café settings updated successfully", "Saved");
+      showToast("success", "Cafe settings updated successfully", "Saved");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to save settings.";
       setErrorMessage(msg);
@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center space-y-3">
         <Loader2 className="h-7 w-7 animate-spin text-slate-900" />
-        <p className="text-xs text-slate-500">Loading café settings...</p>
+        <p className="text-xs text-slate-500">Loading cafe settings...</p>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-6 max-w-4xl">
       <PageHeader
         title="Settings"
-        description="Configure your café profile, branding, and billing details."
+        description="Configure your cafe profile, branding, and details."
       />
 
       {errorMessage && (
@@ -107,10 +107,10 @@ export default function AdminSettingsPage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Café Profile & Branding */}
+        {/* Cafe Profile & Branding */}
         <Card>
           <CardHeader>
-            <CardTitle>Café Information & Branding</CardTitle>
+            <CardTitle>Cafe Information & Branding</CardTitle>
             <CardDescription>
               Basic details shown to customers on the digital QR menu.
             </CardDescription>
@@ -118,7 +118,7 @@ export default function AdminSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
-                label="Café Name"
+                label="Cafe Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Brew House"
@@ -168,7 +168,7 @@ export default function AdminSettingsPage() {
               label="Physical Address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full address of the café"
+              placeholder="Full address of the cafe"
             />
           </CardContent>
         </Card>

@@ -5,7 +5,7 @@ let adminAblyClient: Ably.Realtime | null = null;
 const customerAblyClients = new Map<string, Ably.Realtime>();
 
 /**
- * Get or create an Ably Realtime client for Café Admin.
+ * Get or create an Ably Realtime client for Cafe Admin.
  * Uses authCallback requesting scoped token from /api/realtime/token,
  * or fallback to NEXT_PUBLIC_ABLY_CLIENT_KEY if configured.
  */

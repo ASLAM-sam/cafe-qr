@@ -80,7 +80,7 @@ export default function AdminControllerPage() {
     );
   }
 
-  // 2. Café Subdomain: cafe.mydomain.com/admin -> Café Owner Admin Dashboard
+  // 2. Cafe Subdomain: cafe.mydomain.com/admin -> Cafe Owner Admin Dashboard
   return (
     <AdminLayout>
       <AdminDashboardPage />

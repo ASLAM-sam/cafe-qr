@@ -42,7 +42,7 @@ export default function AdminQrCodesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
         <PageHeader
           title="QR Codes"
-          description="High-resolution printable QR codes for each dining table in your café."
+          description="Printable QR codes for each dining table in your cafe."
         />
 
         {tables.length > 0 && (
@@ -76,7 +76,7 @@ export default function AdminQrCodesPage() {
         <EmptyState
           icon={QrCode}
           title="No QR codes available yet"
-          description="Add tables in Table Management to automatically generate printable QR codes for your café."
+          description="Add tables in Table Management to automatically generate printable QR codes for your cafe."
           actionLabel="Go to Tables"
           onAction={() => {
             router.push("/tables");
@@ -89,18 +89,18 @@ export default function AdminQrCodesPage() {
             return (
               <div
                 key={table.table_id}
-                className="rounded-2xl border-2 border-slate-200 bg-white p-6 text-center shadow-xs flex flex-col items-center justify-between gap-4 break-inside-avoid"
+                className="rounded-2xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] p-6 text-center shadow-xl flex flex-col items-center justify-between gap-4 break-inside-avoid print:bg-white print:border-slate-300 print:text-black"
               >
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-widest text-[oklch(0.70_0.03_280)] print:text-slate-500">
                     Dine-in Ordering
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
+                  <h3 className="text-xl font-black text-white print:text-black mt-1">
                     Table {table.table_number}
                   </h3>
                 </div>
 
-                <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrUrl}
@@ -110,13 +110,13 @@ export default function AdminQrCodesPage() {
                 </div>
 
                 <div className="w-full space-y-2">
-                  <p className="text-[11px] text-slate-500">
-                    Scan with any smartphone camera to order.
+                  <p className="text-[11px] text-[oklch(0.70_0.03_280)] print:text-slate-500">
+                    Scan with any phone camera to view menu and order.
                   </p>
                   <a
                     href={qrUrl}
                     download={`table-${table.table_number}-qr.png`}
-                    className="inline-flex items-center justify-center gap-1.5 w-full h-8 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition print:hidden"
+                    className="inline-flex items-center justify-center gap-1.5 w-full h-9 rounded-xl border border-[oklch(1_0_0/10%)] bg-[oklch(0.20_0.025_280)] text-xs font-semibold text-white hover:bg-[oklch(0.24_0.03_280)] transition print:hidden"
                   >
                     <Download className="h-3.5 w-3.5" />
                     <span>Download PNG</span>

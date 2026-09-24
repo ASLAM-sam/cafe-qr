@@ -154,7 +154,7 @@ export function OrderTimeline({ order: initialOrder, isOpen, onClose }: OrderTim
         <div className="text-center">
           <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-            Your order has been recorded in the café system.
+            Your order has been recorded in the cafe system.
           </p>
         </div>
       </div>

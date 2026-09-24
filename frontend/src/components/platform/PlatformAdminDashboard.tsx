@@ -130,7 +130,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
       showToast(
         "success",
         `${formData.name} (${formData.subdomain}) is now live.`,
-        "Café Onboarded Successfully"
+        "Cafe Added Successfully"
       );
 
       setIsModalOpen(false);
@@ -148,7 +148,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
       if (err instanceof Error) {
         setSubmitError(err.message);
       } else {
-        setSubmitError("Failed to provision café. Please verify your platform credentials.");
+        setSubmitError("Failed to add cafe. Please check your credentials.");
       }
     } finally {
       setIsSubmitting(false);
@@ -167,14 +167,14 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-bold text-white tracking-tight">
-                  Platform Administration
+                  Platform Admin
                 </span>
                 <span className="rounded-full bg-[oklch(0.82_0.14_85/15%)] border border-[oklch(0.82_0.14_85/30%)] px-2 py-0.5 text-[10px] font-bold text-[oklch(0.82_0.14_85)] uppercase tracking-wider">
-                  Root
+                  Admin
                 </span>
               </div>
               <p className="text-[11px] text-[oklch(0.70_0.03_280)]">
-                Manage all café tenants across the platform
+                Manage all cafes from one place
               </p>
             </div>
           </div>
@@ -201,7 +201,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               className="text-xs bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] hover:opacity-95 text-white font-bold h-9 rounded-xl shadow-md shadow-[oklch(0.62_0.27_305/20%)]"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
-              <span>Onboard New Café</span>
+              <span>Add Cafe</span>
             </Button>
             <Button
               variant="outline"
@@ -222,51 +222,51 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-10">
           <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
             <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
-              Total Registered Cafés
+              Total Cafes
             </div>
             <div className="text-3xl sm:text-4xl font-black text-white tracking-tight">
               {cafes.length}
             </div>
             <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
-              Active tenant subdomains on platform
+              Registered cafes on the platform
             </p>
           </div>
 
           <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
             <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
-              Active Tenants
+              Active Cafes
             </div>
             <div className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight">
               {cafes.filter((c) => c.status === "ACTIVE").length}
             </div>
             <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
-              Ready to accept customer QR orders
+              Open and ready to receive orders
             </p>
           </div>
 
           <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
             <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
-              Platform Architecture
+              Cafe System
             </div>
             <div className="flex items-center gap-2 text-base font-bold text-white tracking-tight">
               <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-              <span>Multi-Tenant Isolated</span>
+              <span>Independent Cafes</span>
             </div>
             <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
-              Single codebase &amp; MongoDB Atlas cluster
+              Separate data and menus for each cafe
             </p>
           </div>
         </div>
 
-        {/* Café Directory Table */}
+        {/* Cafe Directory Table */}
         <div className="lux-glass rounded-3xl border border-[oklch(1_0_0/10%)] overflow-hidden shadow-2xl">
           <div className="p-6 sm:p-8 border-b border-[oklch(1_0_0/8%)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">
-                Managed Café Tenants
+                Cafe Management
               </h2>
               <p className="text-xs text-[oklch(0.70_0.03_280)] mt-1">
-                Each café has its own isolated menu, orders, tables, and settings.
+                Each cafe has its own menu, orders, tables, and settings.
               </p>
             </div>
             <Button
@@ -275,28 +275,28 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               className="sm:hidden text-xs bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold h-9 rounded-xl"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
-              <span>Onboard Café</span>
+              <span>Add Cafe</span>
             </Button>
           </div>
 
           <div>
             {isLoading ? (
               <div className="p-12 text-center text-xs text-[oklch(0.70_0.03_280)]">
-                Loading tenant directory...
+                Loading cafes...
               </div>
             ) : cafes.length === 0 ? (
               <div className="p-12 text-center">
                 <Building2 className="h-10 w-10 text-[oklch(0.70_0.03_280)] mx-auto mb-3" />
-                <div className="text-sm font-bold text-white">No Cafés Registered Yet</div>
+                <div className="text-sm font-bold text-white">No Cafes Added Yet</div>
                 <div className="text-xs text-[oklch(0.70_0.03_280)] mt-1 mb-4">
-                  Use the button above to provision your first café tenant.
+                  Click the button above to add your first cafe.
                 </div>
                 <Button
                   size="sm"
                   onClick={() => setIsModalOpen(true)}
                   className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold text-xs"
                 >
-                  Onboard First Café
+                  Add First Cafe
                 </Button>
               </div>
             ) : (
@@ -304,12 +304,12 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                 <table className="w-full text-left text-xs">
                   <thead className="border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.15_0.022_280)] text-[11px] font-bold uppercase tracking-wider text-[oklch(0.70_0.03_280)]">
                     <tr>
-                      <th className="px-6 py-4">Café Name</th>
+                      <th className="px-6 py-4">Cafe Name</th>
                       <th className="px-6 py-4">Subdomain</th>
-                      <th className="px-6 py-4">Owner Contact</th>
+                      <th className="px-6 py-4">Cafe Owner</th>
                       <th className="px-6 py-4">Currency</th>
                       <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Quick Actions</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[oklch(1_0_0/6%)]">
@@ -361,7 +361,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 hover:text-white bg-[oklch(0.20_0.025_280)] hover:bg-[oklch(0.24_0.03_280)] px-3 py-1.5 rounded-lg border border-[oklch(1_0_0/10%)] transition-colors"
                           >
-                            <span>Owner Login</span>
+                            <span>Cafe Login</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </td>
@@ -375,12 +375,12 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
         </div>
       </main>
 
-      {/* Onboard Café Modal */}
+      {/* Add Cafe Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Onboard New Café Tenant"
-        description="Provision a new café subdomain, configure default branding, and generate an owner account."
+        title="Add New Cafe"
+        description="Create a new cafe, choose its subdomain, and set up the owner account."
         maxWidth="lg"
       >
         <form onSubmit={handleCreateCafe} className="space-y-4">
@@ -393,15 +393,15 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Café Name"
-              placeholder="e.g. Artisanal Roastery"
+              label="Cafe Name"
+              placeholder="e.g. Modern Roast"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
             <Input
               label="Subdomain / Slug"
-              placeholder="e.g. artisanal"
+              placeholder="e.g. modernroast"
               value={formData.subdomain}
               onChange={(e) =>
                 setFormData({
@@ -425,7 +425,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
             <Input
               label="Owner Email"
               type="email"
-              placeholder="owner@artisanal.com"
+              placeholder="owner@yourcafe.com"
               value={formData.owner_email}
               onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
               required
@@ -434,7 +434,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Initial Password"
+              label="Password"
               type="password"
               placeholder="••••••••"
               value={formData.owner_password}
@@ -442,7 +442,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                 setFormData({ ...formData, owner_password: e.target.value })
               }
               required
-              helperText="Minimum 6 characters for owner dashboard login."
+              helperText="At least 6 characters for cafe owner login."
             />
             <Input
               label="Currency"
@@ -453,8 +453,8 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
           </div>
 
           <Input
-            label="Brief Description"
-            placeholder="Specialty coffees, fresh pastries, and breakfast."
+            label="Description"
+            placeholder="Specialty coffees, fresh pastries, and snacks."
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -474,7 +474,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               isLoading={isSubmitting}
               className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold"
             >
-              Provision Café
+              Create Cafe
             </Button>
           </div>
         </form>
