@@ -40,7 +40,7 @@ async def create_customer_order(
         from fastapi import HTTPException
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Café not found for this order submission.",
+            detail="Cafe not found for this order submission.",
         )
 
     order_repo = OrderRepository(db)

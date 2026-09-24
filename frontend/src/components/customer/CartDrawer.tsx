@@ -34,6 +34,13 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
   const [orderType, setOrderType] = React.useState<"DINE_IN" | "TAKEAWAY">(
     tableNumber ? "DINE_IN" : "TAKEAWAY"
   );
+
+  React.useEffect(() => {
+    if (tableNumber) {
+      setOrderType("DINE_IN");
+    }
+  }, [tableNumber]);
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -90,7 +97,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
       title="Your Order"
       description={
         tableNumber
-          ? `Dine-in at Table ${tableNumber}`
+          ? `Dine-in at ${tableNumber.toLowerCase().startsWith("table") ? tableNumber : `Table ${tableNumber}`}`
           : cafe?.name || "Order Summary"
       }
       side="bottom"
@@ -244,7 +251,12 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
             {tableNumber && (
               <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
                 <QrCode className="h-4 w-4 text-slate-500 shrink-0" />
-                <span>Ordering for Table {tableNumber}</span>
+                <span>
+                  Ordering for{" "}
+                  {tableNumber.toLowerCase().startsWith("table")
+                    ? tableNumber
+                    : `Table ${tableNumber}`}
+                </span>
               </div>
             )}
           </div>

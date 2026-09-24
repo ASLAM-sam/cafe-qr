@@ -13,15 +13,28 @@ import { TableRowSkeleton } from "@/components/ui/Skeleton";
 export default function AdminQrCodesPage() {
   const router = useRouter();
   const [tables, setTables] = React.useState<Table[]>([]);
+  const [cafeName, setCafeName] = React.useState<string>("");
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    async function loadTables() {
+    async function loadData() {
       setIsLoading(true);
       try {
-        const data = await adminService.getTables();
-        setTables(data || []);
+        const [tablesData, cafeData] = await Promise.allSettled([
+          adminService.getTables(),
+          adminService.getCafe(),
+        ]);
+
+        if (tablesData.status === "fulfilled") {
+          setTables(tablesData.value || []);
+        } else {
+          setTables([]);
+        }
+
+        if (cafeData.status === "fulfilled" && cafeData.value?.name) {
+          setCafeName(cafeData.value.name);
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to load tables.";
         setError(msg);
@@ -30,7 +43,7 @@ export default function AdminQrCodesPage() {
         setIsLoading(false);
       }
     }
-    loadTables();
+    loadData();
   }, []);
 
   const handlePrint = () => {
@@ -85,7 +98,11 @@ export default function AdminQrCodesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tables.map((table) => {
-            const qrUrl = adminService.getTableQrUrl(table.table_id);
+            const qrUrl = adminService.getTableQrUrl(table.table_id, table.qr_token);
+            const displayTable = table.table_number.toLowerCase().startsWith("table")
+              ? table.table_number
+              : `Table ${table.table_number}`;
+
             return (
               <div
                 key={table.table_id}
@@ -93,25 +110,31 @@ export default function AdminQrCodesPage() {
               >
                 <div>
                   <span className="text-xs font-bold uppercase tracking-widest text-[oklch(0.70_0.03_280)] print:text-slate-500">
-                    Dine-in Ordering
+                    DINE-IN ORDERING
                   </span>
                   <h3 className="text-xl font-black text-white print:text-black mt-1">
-                    Table {table.table_number}
+                    {displayTable}
                   </h3>
+                  <div className="mt-1 text-xs text-[oklch(0.75_0.03_280)] print:text-slate-600">
+                    Cafe:{" "}
+                    <span className="font-semibold text-white print:text-black">
+                      {cafeName || "Apex"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrUrl}
-                    alt={`Table ${table.table_number} QR Code`}
+                    alt={`${displayTable} QR Code`}
                     className="w-44 h-44 object-contain"
                   />
                 </div>
 
                 <div className="w-full space-y-2">
                   <p className="text-[11px] text-[oklch(0.70_0.03_280)] print:text-slate-500">
-                    Scan with any phone camera to view menu and order.
+                    Scan with your phone to order
                   </p>
                   <a
                     href={qrUrl}

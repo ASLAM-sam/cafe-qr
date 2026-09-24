@@ -20,10 +20,45 @@ async def resolve_table(
 ):
     """Public customer endpoint: look up a dining table by its scanned QR token."""
     public_rate_limiter.check(request)
+    subdomain = (
+        request.headers.get("x-tenant-subdomain")
+        or request.query_params.get("subdomain")
+        or request.query_params.get("cafe")
+    )
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
-    return await service.resolve_qr_token(qr_token)
+    return await service.resolve_qr_token(qr_token, expected_subdomain=subdomain)
+
+
+@router.get("/api/public/table/{qr_token}/qr")
+@router.get("/public/table/{qr_token}/qr")
+async def download_public_table_qr(
+    qr_token: str,
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Public customer endpoint: generate high-resolution PNG image of the table QR code by token."""
+    public_rate_limiter.check(request)
+    table_repo = TableRepository(db)
+    cafe_repo = CafeRepository(db)
+    service = TableService(table_repo, cafe_repo)
+    base_url = (
+        request.headers.get("x-frontend-url")
+        or request.headers.get("origin")
+    )
+    if not base_url:
+        referer = request.headers.get("referer")
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+    png_bytes = await service.generate_public_qr_png_bytes(qr_token, base_url=base_url)
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": 'inline; filename="table-qr.png"'}
+    )
 
 
 @router.get("/api/tables", response_model=List[TableResponse])
@@ -32,7 +67,7 @@ async def list_admin_tables(
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: fetch all tables for this café."""
+    """Authenticated cafe admin endpoint: fetch all tables for this cafe."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
@@ -45,7 +80,7 @@ async def create_table(
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: create a new table with secure QR token."""
+    """Authenticated cafe admin endpoint: create a new table with secure QR token."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
@@ -58,7 +93,7 @@ async def get_table(
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: get table information."""
+    """Authenticated cafe admin endpoint: get table information."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
@@ -72,7 +107,7 @@ async def update_table(
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: update table number or status."""
+    """Authenticated cafe admin endpoint: update table number or status."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
@@ -85,7 +120,7 @@ async def delete_table(
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: delete a table."""
+    """Authenticated cafe admin endpoint: delete a table."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
@@ -96,14 +131,25 @@ async def delete_table(
 @router.get("/api/tables/{table_id}/qr")
 async def download_table_qr(
     table_id: str,
+    request: Request,
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Authenticated café admin endpoint: generate high-resolution PNG image of the table QR code."""
+    """Authenticated cafe admin endpoint: generate high-resolution PNG image of the table QR code."""
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = TableService(table_repo, cafe_repo)
-    png_bytes = await service.generate_qr_png_bytes(current_cafe["cafe_id"], table_id)
+    base_url = (
+        request.headers.get("x-frontend-url")
+        or request.headers.get("origin")
+    )
+    if not base_url:
+        referer = request.headers.get("referer")
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+    png_bytes = await service.generate_qr_png_bytes(current_cafe["cafe_id"], table_id, base_url=base_url)
     return Response(
         content=png_bytes,
         media_type="image/png",

@@ -118,7 +118,7 @@ async def test_order_rejection_for_other_cafe_product(async_client, auth_headers
         headers={"X-Tenant-Subdomain": "brewhouse"},
     )
     assert order_res.status_code == 400
-    assert "do not belong to this café" in order_res.json()["detail"]
+    assert "do not belong to this cafe" in order_res.json()["detail"]
 
 
 @pytest.mark.asyncio

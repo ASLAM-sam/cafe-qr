@@ -17,7 +17,7 @@ class CafeService:
         if not cafe:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Café with subdomain '{cleaned_subdomain}' was not found or is inactive.",
+                detail=f"Cafe with subdomain '{cleaned_subdomain}' was not found or is inactive.",
             )
 
         # Return strictly public branding fields (no sensitive internal IDs or timestamps)
@@ -39,7 +39,7 @@ class CafeService:
     async def get_cafe_by_id(self, cafe_id: str) -> Dict[str, Any]:
         cafe = await self.cafe_repo.get_by_id(cafe_id)
         if not cafe:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Café not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cafe not found.")
         return cafe
 
     async def update_cafe(self, cafe_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -47,7 +47,7 @@ class CafeService:
         clean_update = {k: v for k, v in update_data.items() if v is not None}
         updated = await self.cafe_repo.update(cafe_id, clean_update)
         if not updated:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Café not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cafe not found.")
         return updated
 
     async def list_all_cafes(self, limit: int = 100, skip: int = 0) -> list[Dict[str, Any]]:

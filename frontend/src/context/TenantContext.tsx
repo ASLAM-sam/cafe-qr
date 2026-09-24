@@ -97,47 +97,120 @@ export function TenantProvider({
   initialIsPlatform?: boolean;
 }) {
   const [cafe, setCafe] = React.useState<Cafe | null>(initialCafe);
-  const [subdomain, setSubdomain] = React.useState<string | null>(initialSubdomain);
-  const [isPlatform, setIsPlatform] = React.useState<boolean>(initialIsPlatform);
-  const [tableToken, setTableToken] = React.useState<string | null>(null);
-  const [tableNumber, setTableNumber] = React.useState<string | null>(null);
+  const [subdomain, setSubdomain] = React.useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const res = resolveTenantFromHost(window.location.hostname, urlParams);
+      return res.subdomain || initialSubdomain;
+    }
+    return initialSubdomain;
+  });
+  const [isPlatform, setIsPlatform] = React.useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const res = resolveTenantFromHost(window.location.hostname, urlParams);
+      return res.isPlatform;
+    }
+    return initialIsPlatform;
+  });
+  const [tableToken, setTableToken] = React.useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromUrl = urlParams.get("token") || urlParams.get("t");
+      if (fromUrl) return fromUrl;
+      try {
+        return sessionStorage.getItem("cafe_table_token") || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [tableNumber, setTableNumber] = React.useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromUrl = urlParams.get("table");
+      if (fromUrl) return fromUrl;
+      try {
+        return sessionStorage.getItem("cafe_table_number") || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== "undefined") {
-        const hostname = window.location.hostname;
-        const urlParams = new URLSearchParams(window.location.search);
+    if (typeof window === "undefined") return;
 
-        // Extract table token or table number from URL params if present
-        const tokenFromUrl = urlParams.get("token") || urlParams.get("t");
-        const tableFromUrl = urlParams.get("table");
-        if (tokenFromUrl) setTableToken(tokenFromUrl);
-        if (tableFromUrl) setTableNumber(tableFromUrl);
+    const hostname = window.location.hostname;
+    const urlParams = new URLSearchParams(window.location.search);
 
-        const resolution = resolveTenantFromHost(hostname, urlParams);
-        setSubdomain(resolution.subdomain);
-        setIsPlatform(resolution.isPlatform);
+    const tokenFromUrl = urlParams.get("token") || urlParams.get("t");
+    const tableFromUrl = urlParams.get("table");
 
-        // Apply dynamic brand primary color if provided
-        if (cafe?.primary_color) {
-          document.documentElement.style.setProperty(
-            "--tenant-primary",
-            cafe.primary_color
-          );
-        }
-
-        setIsLoading(false);
+    if (tokenFromUrl) {
+      setTableToken(tokenFromUrl);
+      try {
+        sessionStorage.setItem("cafe_table_token", tokenFromUrl);
+      } catch {
+        // Ignore sessionStorage errors
       }
-    }, 0);
+    } else {
+      try {
+        const storedToken = sessionStorage.getItem("cafe_table_token");
+        if (storedToken && !tableToken) setTableToken(storedToken);
+      } catch {
+        // Ignore sessionStorage errors
+      }
+    }
 
-    return () => clearTimeout(timer);
-  }, [cafe]);
+    if (tableFromUrl) {
+      setTableNumber(tableFromUrl);
+      try {
+        sessionStorage.setItem("cafe_table_number", tableFromUrl);
+      } catch {
+        // Ignore sessionStorage errors
+      }
+    } else {
+      try {
+        const storedTable = sessionStorage.getItem("cafe_table_number");
+        if (storedTable && !tableNumber) setTableNumber(storedTable);
+      } catch {
+        // Ignore sessionStorage errors
+      }
+    }
+
+    const resolution = resolveTenantFromHost(hostname, urlParams);
+    setSubdomain(resolution.subdomain);
+    setIsPlatform(resolution.isPlatform);
+
+    // Apply dynamic brand primary color if provided
+    if (cafe?.primary_color) {
+      document.documentElement.style.setProperty(
+        "--tenant-primary",
+        cafe.primary_color
+      );
+    }
+
+    setIsLoading(false);
+  }, [cafe, tableToken, tableNumber]);
 
   const setTableContext = React.useCallback(
     (token: string | null, number: string | null) => {
       setTableToken(token);
       setTableNumber(number);
+      if (typeof window !== "undefined") {
+        try {
+          if (token) sessionStorage.setItem("cafe_table_token", token);
+          else sessionStorage.removeItem("cafe_table_token");
+          if (number) sessionStorage.setItem("cafe_table_number", number);
+          else sessionStorage.removeItem("cafe_table_number");
+        } catch {
+          // Ignore sessionStorage errors
+        }
+      }
     },
     []
   );

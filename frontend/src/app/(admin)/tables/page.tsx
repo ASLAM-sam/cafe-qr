@@ -269,7 +269,7 @@ export default function AdminTablesPage() {
             <div className="flex justify-center p-4 bg-white rounded-xl border border-slate-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={adminService.getTableQrUrl(selectedTableForQr.table_id)}
+                src={adminService.getTableQrUrl(selectedTableForQr.table_id, selectedTableForQr.qr_token)}
                 alt={`Table ${selectedTableForQr.table_number} QR Code`}
                 className="w-48 h-48 object-contain"
               />
@@ -281,7 +281,7 @@ export default function AdminTablesPage() {
 
             <div className="flex gap-2 pt-2">
               <a
-                href={adminService.getTableQrUrl(selectedTableForQr.table_id)}
+                href={adminService.getTableQrUrl(selectedTableForQr.table_id, selectedTableForQr.qr_token)}
                 download={`table-${selectedTableForQr.table_number}-qr.png`}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
               >

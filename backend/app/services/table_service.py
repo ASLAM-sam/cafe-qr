@@ -27,7 +27,9 @@ class TableService:
         table["qr_url"] = f"{settings.FRONTEND_URL}/t/{table['qr_token']}"
         return table
 
-    async def resolve_qr_token(self, qr_token: str) -> Dict[str, Any]:
+    async def resolve_qr_token(
+        self, qr_token: str, expected_subdomain: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Public endpoint: look up a table by its QR token."""
         table = await self.table_repo.get_by_qr_token(qr_token)
         if not table:
@@ -39,8 +41,14 @@ class TableService:
         if not cafe or cafe.get("status") != "ACTIVE":
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="The café associated with this table is currently unavailable.",
+                detail="The cafe associated with this table is currently unavailable.",
             )
+        if expected_subdomain and expected_subdomain.lower() not in {"", "default", "none"}:
+            if cafe["subdomain"].lower() != expected_subdomain.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Table QR code does not belong to the specified cafe.",
+                )
         table["qr_url"] = f"{settings.FRONTEND_URL}/t/{table['qr_token']}"
         return {
             "table": table,
@@ -57,7 +65,7 @@ class TableService:
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Table number '{cleaned_number}' already exists in this café.",
+                detail=f"Table number '{cleaned_number}' already exists in this cafe.",
             )
 
         table_id = generate_id("tbl")
@@ -83,7 +91,7 @@ class TableService:
             if existing and existing["table_id"] != table_id:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Table number '{cleaned_number}' already exists in this café.",
+                    detail=f"Table number '{cleaned_number}' already exists in this cafe.",
                 )
             data["table_number"] = cleaned_number
 
@@ -98,10 +106,47 @@ class TableService:
         await self.get_table(cafe_id, table_id)
         return await self.table_repo.delete(cafe_id, table_id)
 
-    async def generate_qr_png_bytes(self, cafe_id: str, table_id: str) -> bytes:
+    async def generate_qr_png_bytes(
+        self, cafe_id: str, table_id: str, base_url: Optional[str] = None
+    ) -> bytes:
         """Generate high-resolution PNG image bytes for printable QR code."""
         table = await self.get_table(cafe_id, table_id)
-        target_url = f"{settings.FRONTEND_URL}/t/{table['qr_token']}"
+        clean_base = (base_url or settings.FRONTEND_URL).rstrip("/")
+        target_url = f"{clean_base}/t/{table['qr_token']}"
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(target_url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        return buffer.getvalue()
+
+    async def generate_public_qr_png_bytes(
+        self, qr_token: str, base_url: Optional[str] = None
+    ) -> bytes:
+        """Generate high-resolution PNG image bytes using secure public QR token."""
+        table = await self.table_repo.get_by_qr_token(qr_token)
+        if not table:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Invalid table QR code.",
+            )
+        cafe = await self.cafe_repo.get_by_id(table["cafe_id"])
+        if not cafe or cafe.get("status") != "ACTIVE":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="The cafe associated with this table is currently unavailable.",
+            )
+
+        clean_base = (base_url or settings.FRONTEND_URL).rstrip("/")
+        target_url = f"{clean_base}/t/{table['qr_token']}"
 
         qr = qrcode.QRCode(
             version=1,

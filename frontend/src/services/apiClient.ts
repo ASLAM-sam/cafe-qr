@@ -152,8 +152,18 @@ export const customerService = {
     return request<Product[]>(`/public/products${query}`, { method: "GET" }, subdomain);
   },
 
-  resolveTableToken: (subdomain: string, token: string) =>
-    request<Table>(`/public/table/${encodeURIComponent(token)}`, { method: "GET" }, subdomain),
+  resolveTableToken: (subdomainOrToken: string, maybeToken?: string) => {
+    const token = maybeToken || subdomainOrToken;
+    const subdomain = maybeToken ? subdomainOrToken : undefined;
+    return request<{
+      table: Table;
+      cafe: { name: string; subdomain: string; currency: string };
+    }>(
+      `/public/table/${encodeURIComponent(token)}`,
+      { method: "GET" },
+      subdomain && subdomain !== "default" ? subdomain : undefined
+    );
+  },
 
   createOrder: (
     subdomain: string,
@@ -346,8 +356,12 @@ export const adminService = {
       method: "DELETE",
     }),
 
-  getTableQrUrl: (tableId: string) =>
-    buildApiUrl(`/tables/${encodeURIComponent(tableId)}/qr`),
+  getTableQrUrl: (tableId: string, qrToken?: string) => {
+    if (qrToken) {
+      return buildApiUrl(`/public/table/${encodeURIComponent(qrToken)}/qr`);
+    }
+    return buildApiUrl(`/tables/${encodeURIComponent(tableId)}/qr`);
+  },
 
   getRealtimeToken: () =>
     request<{ tokenRequest: Record<string, unknown> }>(`/realtime/token`, { method: "GET" }),

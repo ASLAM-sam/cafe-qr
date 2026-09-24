@@ -50,12 +50,12 @@ class OrderService:
             if existing:
                 return existing
 
-        # 2. Verify café exists and is active
+        # 2. Verify cafe exists and is active
         cafe = await self.cafe_repo.get_by_id(cafe_id)
         if not cafe or cafe.get("status") != "ACTIVE":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Café is inactive or invalid.",
+                detail="Cafe is inactive or invalid.",
             )
 
         # 3. Resolve table if table_token or table_id is provided
@@ -68,7 +68,7 @@ class OrderService:
             if not table or table["cafe_id"] != cafe_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid table QR code for this café.",
+                    detail="Invalid table QR code for this cafe.",
                 )
             table_id = table["table_id"]
             table_number = table["table_number"]
@@ -93,7 +93,7 @@ class OrderService:
         if len(db_products) != len(set(product_ids)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="One or more products in your cart do not belong to this café or do not exist.",
+                detail="One or more products in your cart do not belong to this cafe or do not exist.",
             )
 
         calculated_items = []

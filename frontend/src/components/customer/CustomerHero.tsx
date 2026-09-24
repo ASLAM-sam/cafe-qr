@@ -6,7 +6,7 @@ import { Coffee, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 
 export function CustomerHero() {
-  const { cafe } = useTenant();
+  const { cafe, tableNumber } = useTenant();
 
   return (
     <div className="border-b border-slate-200/60 bg-white px-4 pt-5 pb-4 text-center">
@@ -30,6 +30,20 @@ export function CustomerHero() {
         <h2 className="text-lg font-bold tracking-tight text-slate-900">
           {cafe?.name || "Welcome to Our Cafe"}
         </h2>
+
+        {/* Table Context Badge */}
+        {tableNumber && (
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-900 text-white text-xs font-semibold shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>
+              {tableNumber.toLowerCase().startsWith("table")
+                ? tableNumber
+                : `Table ${tableNumber}`}{" "}
+              • Dine-in
+            </span>
+          </div>
+        )}
+
         {cafe?.description && (
           <p className="mt-1 text-xs text-slate-500 line-clamp-2">
             {cafe.description}
