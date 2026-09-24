@@ -7,10 +7,11 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatCurrency, cn } from "@/lib/utils";
-import { ShoppingBag, Trash2, Plus, Minus, QrCode } from "lucide-react";
+import { formatCurrency, cn, cloudinaryUrl } from "@/lib/utils";
+import { ShoppingBag, Trash2, Plus, Minus, QrCode, Utensils } from "lucide-react";
 import { customerService } from "@/services/apiClient";
 import { Order } from "@/types";
+import Image from "next/image";
 
 export interface CartDrawerProps {
   onOrderPlaced?: (order: Order) => void;
@@ -90,6 +91,12 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
     }
   };
 
+  // Calculate tax preview
+  const taxEnabled = cafe?.tax_settings?.tax_enabled;
+  const taxRate = cafe?.tax_settings?.tax_rate_percent || 0;
+  const taxAmount = taxEnabled ? (subtotal * taxRate) / 100 : 0;
+  const estimatedTotal = subtotal + taxAmount;
+
   return (
     <Drawer
       isOpen={isCartOpen}
@@ -111,97 +118,106 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
           onAction={() => setIsCartOpen(false)}
         />
       ) : (
-        <form onSubmit={handlePlaceOrder} className="space-y-5 pb-6">
+        <form onSubmit={handlePlaceOrder} className="space-y-4 pb-6">
           {/* Item List */}
-          <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto pr-1">
-            {items.map((item) => (
-              <div
-                key={item.product_id}
-                className="flex items-center justify-between py-3 gap-2"
-              >
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-semibold text-slate-900 truncate">
-                    {item.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    {formatCurrency(item.price, cafe?.currency)} each
-                  </p>
-                </div>
-
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => updateQuantity(item.product_id, -1)}
-                    className="flex h-5 w-5 items-center justify-center rounded bg-white text-slate-700 shadow-2xs hover:bg-slate-100 active:scale-95"
-                  >
-                    <Minus className="h-2.5 w-2.5" />
-                  </button>
-                  <span className="w-4 text-center text-xs font-bold text-slate-900">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => updateQuantity(item.product_id, 1)}
-                    className="flex h-5 w-5 items-center justify-center rounded bg-white text-slate-700 shadow-2xs hover:bg-slate-100 active:scale-95"
-                  >
-                    <Plus className="h-2.5 w-2.5" />
-                  </button>
-                </div>
-
-                <span className="text-xs font-bold text-slate-900 min-w-14 text-right">
-                  {formatCurrency(item.price * item.quantity, cafe?.currency)}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.product_id)}
-                  className="text-slate-400 hover:text-rose-600 transition p-1"
-                  aria-label="Remove item"
+          <div className="max-h-60 overflow-y-auto -mx-1 px-1">
+            <div className="space-y-2">
+              {items.map((item) => (
+                <div
+                  key={item.product_id}
+                  className="flex items-center gap-3 rounded-xl bg-stone-50 border border-stone-200/60 p-2.5"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+                  {/* Item thumbnail */}
+                  <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-stone-200 shrink-0">
+                    {item.image_url ? (
+                      <Image
+                        src={cloudinaryUrl(item.image_url, 100, 100, 60)}
+                        alt={item.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-stone-400">
+                        <Utensils className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-stone-900 truncate">
+                      {item.name}
+                    </h4>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      {formatCurrency(item.price, cafe?.currency)} each
+                    </p>
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-0 rounded-lg bg-stone-900 p-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product_id, -1)}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-white/90 hover:bg-white/10 active:scale-90 transition"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-5 text-center text-xs font-bold text-white tabular-nums">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product_id, 1)}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-white/90 hover:bg-white/10 active:scale-90 transition"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <span className="text-xs font-bold text-stone-900 min-w-12 text-right tabular-nums">
+                    {formatCurrency(item.price * item.quantity, cafe?.currency)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.product_id)}
+                    className="text-stone-400 hover:text-rose-600 transition p-1"
+                    aria-label="Remove item"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Subtotal & Totals */}
-          <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80 space-y-1.5 text-xs">
-            <div className="flex justify-between text-slate-600">
+          <div className="rounded-xl bg-amber-50/50 p-3.5 border border-amber-200/40 space-y-1.5 text-xs">
+            <div className="flex justify-between text-stone-600">
               <span>Subtotal ({itemCount} items)</span>
-              <span>{formatCurrency(subtotal, cafe?.currency)}</span>
+              <span className="tabular-nums">{formatCurrency(subtotal, cafe?.currency)}</span>
             </div>
-            {cafe?.tax_settings?.tax_enabled && (
-              <div className="flex justify-between text-slate-600">
-                <span>Tax ({cafe.tax_settings.tax_rate_percent}%)</span>
-                <span>
-                  {formatCurrency(
-                    (subtotal * cafe.tax_settings.tax_rate_percent) / 100,
-                    cafe.currency
-                  )}
+            {taxEnabled && (
+              <div className="flex justify-between text-stone-600">
+                <span>Tax ({taxRate}%)</span>
+                <span className="tabular-nums">
+                  {formatCurrency(taxAmount, cafe?.currency)}
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-slate-900 text-sm pt-2 border-t border-slate-200">
+            <div className="flex justify-between font-bold text-stone-900 text-sm pt-2 border-t border-amber-200/60">
               <span>Total</span>
-              <span>
-                {formatCurrency(
-                  cafe?.tax_settings?.tax_enabled
-                    ? subtotal + (subtotal * cafe.tax_settings.tax_rate_percent) / 100
-                    : subtotal,
-                  cafe?.currency
-                )}
-              </span>
+              <span className="tabular-nums">{formatCurrency(estimatedTotal, cafe?.currency)}</span>
             </div>
-            <p className="text-[10px] text-slate-400 pt-1">
-              *Final prices and taxes will be validated server-side by the cafe system.
+            <p className="text-[10px] text-stone-400 pt-0.5">
+              *Final total will be confirmed by the cafe.
             </p>
           </div>
 
           {/* Customer Details */}
           <div className="space-y-3 pt-1">
-            <h5 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-              Customer Details (Optional)
+            <h5 className="text-xs font-semibold text-stone-700">
+              Your Details (Optional)
             </h5>
             <div className="grid grid-cols-2 gap-2">
               <Input
@@ -211,7 +227,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                 autoComplete="name"
               />
               <Input
-                placeholder="Phone (optional)"
+                placeholder="Phone"
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
@@ -225,10 +241,10 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                   type="button"
                   onClick={() => setOrderType("DINE_IN")}
                   className={cn(
-                    "flex-1 py-1.5 rounded-lg border text-xs font-semibold transition",
+                    "flex-1 py-2 rounded-xl border text-xs font-semibold transition-all",
                     orderType === "DINE_IN"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      ? "bg-stone-900 text-white border-stone-900 shadow-sm"
+                      : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                   )}
                 >
                   Dine In
@@ -237,10 +253,10 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                   type="button"
                   onClick={() => setOrderType("TAKEAWAY")}
                   className={cn(
-                    "flex-1 py-1.5 rounded-lg border text-xs font-semibold transition",
+                    "flex-1 py-2 rounded-xl border text-xs font-semibold transition-all",
                     orderType === "TAKEAWAY"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      ? "bg-stone-900 text-white border-stone-900 shadow-sm"
+                      : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                   )}
                 >
                   Takeaway
@@ -249,9 +265,9 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
             )}
 
             {tableNumber && (
-              <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
-                <QrCode className="h-4 w-4 text-slate-500 shrink-0" />
-                <span>
+              <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200/60 px-3 py-2.5 text-xs text-amber-800">
+                <QrCode className="h-4 w-4 text-amber-600 shrink-0" />
+                <span className="font-medium">
                   Ordering for{" "}
                   {tableNumber.toLowerCase().startsWith("table")
                     ? tableNumber
@@ -262,7 +278,7 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
           </div>
 
           {errorMessage && (
-            <div className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700">
+            <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
               {errorMessage}
             </div>
           )}
@@ -275,13 +291,13 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
               onClick={() => setIsCartOpen(false)}
               className="flex-1"
             >
-              Continue Ordering
+              Add More
             </Button>
             <Button
               type="submit"
               variant="primary"
               isLoading={isSubmitting}
-              className="flex-1"
+              className="flex-1 !bg-gradient-to-r !from-amber-600 !to-orange-600 !border-0 !shadow-lg !shadow-amber-600/20"
             >
               Place Order
             </Button>

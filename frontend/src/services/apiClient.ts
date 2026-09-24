@@ -1,4 +1,4 @@
-import { Cafe, Category, Product, Order, Table, User } from "@/types";
+import { Cafe, Category, Product, Order, Table, User, AddonGroup } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -199,6 +199,11 @@ export const customerService = {
       `/realtime/customer-token/${encodeURIComponent(orderReference)}`,
       { method: "GET" }
     ),
+
+  getAddons: (subdomain: string, productId?: string) => {
+    const query = productId ? `?product_id=${encodeURIComponent(productId)}` : "";
+    return request<AddonGroup[]>(`/public/addons${query}`, { method: "GET" }, subdomain);
+  },
 };
 
 /**
@@ -375,6 +380,37 @@ export const adminService = {
       token_request?: Record<string, unknown>;
       message?: string;
     }>(`/realtime/token`, { method: "GET" }),
+
+  getAddons: (productId?: string) => {
+    const query = productId ? `?product_id=${encodeURIComponent(productId)}` : "";
+    return request<AddonGroup[]>(`/admin/addons${query}`, { method: "GET" });
+  },
+
+  createAddon: (data: {
+    name: string;
+    description?: string;
+    is_required?: boolean;
+    max_selections?: number;
+    min_selections?: number;
+    display_order?: number;
+    items: { addon_item_id?: string; name: string; price: number; is_available?: boolean }[];
+    product_ids: string[];
+  }) =>
+    request<AddonGroup>(`/addons`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateAddon: (addonGroupId: string, data: Partial<AddonGroup>) =>
+    request<AddonGroup>(`/addons/${encodeURIComponent(addonGroupId)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteAddon: (addonGroupId: string) =>
+    request<{ success: boolean; message: string }>(`/addons/${encodeURIComponent(addonGroupId)}`, {
+      method: "DELETE",
+    }),
 };
 
 /**

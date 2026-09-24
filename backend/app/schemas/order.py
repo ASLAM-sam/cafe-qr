@@ -8,9 +8,19 @@ OrderStatus = Literal["PLACED", "ACCEPTED", "PREPARING", "READY", "COMPLETED", "
 PaymentStatus = Literal["PENDING", "PAID", "FAILED"]
 
 
+class OrderAddonSelection(BaseModel):
+    """A single addon selected for an order item."""
+    addon_group_id: str
+    addon_group_name: str = ""
+    addon_item_id: str
+    addon_item_name: str = ""
+    price: float = 0.0
+
+
 class OrderItemRequest(BaseModel):
     product_id: str
     quantity: int = Field(..., ge=1, le=50)
+    addons: Optional[List[OrderAddonSelection]] = None
 
 
 class OrderCreateRequest(BaseModel):
@@ -29,6 +39,8 @@ class OrderItemResponse(BaseModel):
     quantity: int
     unit_price: float
     subtotal: float
+    addons: Optional[List[OrderAddonSelection]] = None
+    addons_total: float = 0.0
 
 
 class OrderResponse(BaseModel):

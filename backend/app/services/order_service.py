@@ -6,6 +6,7 @@ from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.table_repository import TableRepository
 from app.repositories.cafe_repository import CafeRepository
+from app.repositories.addon_repository import AddonRepository
 from app.services.ably_service import AblyService, ably_service
 from app.utils.ids import generate_id, generate_order_reference
 
@@ -30,12 +31,14 @@ class OrderService:
         table_repo: TableRepository,
         cafe_repo: CafeRepository,
         pub_service: AblyService = ably_service,
+        addon_repo: Optional[AddonRepository] = None,
     ):
         self.order_repo = order_repo
         self.product_repo = product_repo
         self.table_repo = table_repo
         self.cafe_repo = cafe_repo
         self.ably_service = pub_service
+        self.addon_repo = addon_repo
 
     async def create_order(
         self,
@@ -114,6 +117,24 @@ class OrderService:
         calculated_items = []
         subtotal = 0.0
 
+        # Pre-fetch addon groups for all requested products if any item has addons
+        addon_map: Dict[str, Dict[str, Any]] = {}
+        has_addons = any(item.get("addons") for item in requested_items)
+        if has_addons:
+            try:
+                repo = self.addon_repo
+                if repo is None:
+                    db = getattr(self.order_repo.collection, "database", None)
+                    if db is None:
+                        from app.core.database import get_database
+                        db = get_database()
+                    repo = AddonRepository(db)
+                all_addon_groups = await repo.get_for_products(cafe_id, product_ids)
+                for ag in all_addon_groups:
+                    addon_map[ag["addon_group_id"]] = ag
+            except Exception as e:
+                logger.warning(f"Addon lookup during order creation error: {e}")
+
         for item in requested_items:
             prod_id = item["product_id"]
             qty = int(item["quantity"])
@@ -133,17 +154,47 @@ class OrderService:
                 )
 
             unit_price = float(product["price"])
-            item_subtotal = round(unit_price * qty, 2)
+
+            # Calculate addon costs (server-authoritative pricing)
+            addon_selections = []
+            addons_total_per_unit = 0.0
+            for addon_sel in (item.get("addons") or []):
+                group_id = addon_sel.get("addon_group_id", "")
+                item_id = addon_sel.get("addon_item_id", "")
+                group = addon_map.get(group_id)
+                if group:
+                    db_item = next(
+                        (ai for ai in group.get("items", []) if ai.get("addon_item_id") == item_id),
+                        None
+                    )
+                    if db_item:
+                        addon_price = float(db_item.get("price", 0.0))
+                        addons_total_per_unit += addon_price
+                        addon_selections.append({
+                            "addon_group_id": group_id,
+                            "addon_group_name": group.get("name", ""),
+                            "addon_item_id": item_id,
+                            "addon_item_name": db_item.get("name", ""),
+                            "price": addon_price,
+                        })
+
+            effective_unit_price = unit_price + addons_total_per_unit
+            item_subtotal = round(effective_unit_price * qty, 2)
             subtotal += item_subtotal
 
-            # Snapshot product name and unit price at time of order
-            calculated_items.append({
+            # Snapshot product name, unit price, and addons at time of order
+            calc_item: Dict[str, Any] = {
                 "product_id": prod_id,
                 "product_name": product["name"],
                 "quantity": qty,
                 "unit_price": unit_price,
                 "subtotal": item_subtotal,
-            })
+            }
+            if addon_selections:
+                calc_item["addons"] = addon_selections
+                calc_item["addons_total"] = round(addons_total_per_unit * qty, 2)
+            calculated_items.append(calc_item)
+
 
         subtotal = round(subtotal, 2)
 

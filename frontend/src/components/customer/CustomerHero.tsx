@@ -2,69 +2,81 @@
 
 import * as React from "react";
 import { useTenant } from "@/context/TenantContext";
-import { Coffee, MapPin, Phone } from "lucide-react";
+import { Coffee, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 
 export function CustomerHero() {
   const { cafe, tableNumber } = useTenant();
 
   return (
-    <div className="border-b border-slate-200/60 bg-white px-4 pt-5 pb-4 text-center">
-      <div className="mx-auto max-w-sm">
-        {/* Brand Logo */}
-        <div className="mx-auto mb-2.5 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm overflow-hidden relative">
-          {cafe?.logo ? (
-            <Image
-              src={cafe.logo}
-              alt={cafe.name || "Cafe Logo"}
-              fill
-              sizes="56px"
-              className="object-cover"
-            />
-          ) : (
-            <Coffee className="h-7 w-7 text-slate-100" />
-          )}
-        </div>
+    <div className="relative overflow-hidden bg-gradient-to-b from-stone-50 to-white">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }} />
 
-        {/* Cafe Title & Description */}
-        <h2 className="text-lg font-bold tracking-tight text-slate-900">
-          {cafe?.name || "Welcome to Our Cafe"}
-        </h2>
+      <div className="relative px-5 pt-5 pb-4">
+        <div className="flex items-start gap-4">
+          {/* Brand Logo - larger for hero */}
+          <div className="relative h-16 w-16 overflow-hidden rounded-2xl shadow-lg shrink-0 border border-stone-200/60">
+            {cafe?.logo ? (
+              <Image
+                src={cafe.logo}
+                alt={cafe.name || "Cafe Logo"}
+                fill
+                sizes="64px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-600 to-orange-700 text-white">
+                <Coffee className="h-8 w-8" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Cafe Title */}
+            <h2 className="text-lg font-bold tracking-tight text-stone-900 leading-tight">
+              {cafe?.name || "Welcome"}
+            </h2>
+
+            {cafe?.description && (
+              <p className="mt-1 text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                {cafe.description}
+              </p>
+            )}
+
+            {/* Metadata row */}
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {cafe?.address && (
+                <span className="flex items-center gap-1 text-[11px] text-stone-400">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="truncate max-w-[150px]">{cafe.address}</span>
+                </span>
+              )}
+              {cafe?.phone && (
+                <span className="flex items-center gap-1 text-[11px] text-stone-400">
+                  <Clock className="h-3 w-3 shrink-0" />
+                  <span>Open Now</span>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Table Context Badge */}
         {tableNumber && (
-          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-900 text-white text-xs font-semibold shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>
+          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <span className="text-xs font-semibold text-amber-900">
               {tableNumber.toLowerCase().startsWith("table")
                 ? tableNumber
                 : `Table ${tableNumber}`}{" "}
-              • Dine-in
+              — Dine In
             </span>
-          </div>
-        )}
-
-        {cafe?.description && (
-          <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-            {cafe.description}
-          </p>
-        )}
-
-        {/* Location / Contact details if present */}
-        {(cafe?.address || cafe?.phone) && (
-          <div className="mt-2.5 flex items-center justify-center gap-3 text-[11px] text-slate-400">
-            {cafe.address && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span className="truncate max-w-[140px]">{cafe.address}</span>
-              </span>
-            )}
-            {cafe.phone && (
-              <span className="flex items-center gap-1">
-                <Phone className="h-3 w-3 shrink-0" />
-                <span>{cafe.phone}</span>
-              </span>
-            )}
           </div>
         )}
       </div>

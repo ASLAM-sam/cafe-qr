@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api import health, auth, cafes, categories, products, tables, orders, platform, realtime
+from app.api import health, auth, cafes, categories, products, tables, orders, platform, realtime, addons
 
 # Configure structured logging
 logging.basicConfig(
@@ -140,3 +140,4 @@ app.include_router(tables.router)
 app.include_router(orders.router)
 app.include_router(platform.router)
 app.include_router(realtime.router)
+app.include_router(addons.router)

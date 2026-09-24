@@ -14,9 +14,9 @@ function CustomerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100/60">
-      {/* Customer Container (mobile-first max-w-lg container centered on larger screens) */}
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col bg-slate-50 shadow-sm min-h-screen border-x border-slate-200/60">
+    <div className="flex min-h-screen flex-col bg-stone-100/60">
+      {/* Customer Container — mobile-first, responsively wider on tablets/desktops */}
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col bg-white shadow-sm min-h-screen md:max-w-xl lg:max-w-2xl md:shadow-lg md:my-0 md:border-x md:border-stone-200/40">
         <CustomerHeader />
         <main className="flex-1 pb-20">{children}</main>
       </div>
@@ -35,4 +35,3 @@ export default function CustomerLayout({
     </CartProvider>
   );
 }
-

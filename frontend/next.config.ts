@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Enable modern image formats for smaller payloads
+    formats: ["image/avif", "image/webp"],
+    // Responsive device sizes for srcset generation
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [48, 64, 96, 128, 256, 384],
+    // Minimize layout shift
+    minimumCacheTTL: 3600,
   },
   async headers() {
     return [
@@ -39,4 +46,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

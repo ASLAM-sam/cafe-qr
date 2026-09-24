@@ -15,6 +15,7 @@ import {
   LogOut,
   Coffee,
   X,
+  PlusCircle,
 } from "lucide-react";
 import { adminService } from "@/services/apiClient";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
     children: [
       { label: "Categories", href: "/menu/categories", icon: Layers },
       { label: "Products", href: "/menu/products", icon: UtensilsCrossed },
+      { label: "Add-ons", href: "/menu/addons", icon: PlusCircle },
     ],
   },
   { label: "Tables", href: "/tables", icon: Grid },

@@ -68,6 +68,11 @@
   scrollbar-width: none;
 }
 
+/* Tabular numbers for prices and quantities */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Luxury Dark System Animation Keyframes */
 @keyframes lux-float {
   0%, 100% {
@@ -105,6 +110,38 @@
   100% {
     background-position: 200% 0;
   }
+}
+
+/* Slide in from bottom animation */
+@keyframes slide-in-from-bottom {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in.slide-in-from-bottom {
+  animation: slide-in-from-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Zoom in animation for badges/counters */
+@keyframes zoom-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-in.zoom-in-50 {
+  animation: zoom-in 0.2s ease-out;
 }
 
 /* Luxury Utility Classes */

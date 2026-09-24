@@ -7,13 +7,14 @@ import { Category, Product, Order } from "@/types";
 import { CustomerHero } from "@/components/customer/CustomerHero";
 import { CategoryNav } from "@/components/customer/CategoryNav";
 import { ProductCard } from "@/components/customer/ProductCard";
+import { ProductDetailModal } from "@/components/customer/ProductDetailModal";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
 import { CartDrawer } from "@/components/customer/CartDrawer";
 import { OrderTimeline } from "@/components/customer/OrderTimeline";
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { UtensilsCrossed } from "lucide-react";
+import { UtensilsCrossed, Search, X } from "lucide-react";
 import { PlatformLanding } from "@/components/platform/PlatformLanding";
 
 export default function CustomerMenuPage() {
@@ -22,6 +23,8 @@ export default function CustomerMenuPage() {
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -70,9 +73,54 @@ export default function CustomerMenuPage() {
   }, [loadMenuData]);
 
   const filteredProducts = React.useMemo(() => {
-    if (!selectedCategoryId) return products;
-    return products.filter((p) => p.category_id === selectedCategoryId);
-  }, [products, selectedCategoryId]);
+    let result = products;
+
+    // Filter by category
+    if (selectedCategoryId) {
+      result = result.filter((p) => p.category_id === selectedCategoryId);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+
+    return result;
+  }, [products, selectedCategoryId, searchQuery]);
+
+  // Group products by category for display
+  const groupedProducts = React.useMemo(() => {
+    if (selectedCategoryId || searchQuery.trim()) {
+      return [{ categoryName: null, products: filteredProducts }];
+    }
+
+    const activeCategories = categories
+      .filter((c) => c.is_active)
+      .sort((a, b) => a.display_order - b.display_order);
+
+    const groups: { categoryName: string | null; products: Product[] }[] = [];
+
+    for (const cat of activeCategories) {
+      const catProducts = filteredProducts.filter((p) => p.category_id === cat.category_id);
+      if (catProducts.length > 0) {
+        groups.push({ categoryName: cat.name, products: catProducts });
+      }
+    }
+
+    // Uncategorized products
+    const categorizedIds = new Set(activeCategories.map((c) => c.category_id));
+    const uncategorized = filteredProducts.filter((p) => !categorizedIds.has(p.category_id));
+    if (uncategorized.length > 0) {
+      groups.push({ categoryName: "Other", products: uncategorized });
+    }
+
+    return groups;
+  }, [filteredProducts, categories, selectedCategoryId, searchQuery]);
 
   const handleOrderPlaced = (order: Order) => {
     setActiveOrder(order);
@@ -85,10 +133,31 @@ export default function CustomerMenuPage() {
   }
 
   return (
-
-    <div>
+    <div className="bg-white min-h-screen">
       {/* Cafe Hero & Branding */}
       <CustomerHero />
+
+      {/* Search Bar */}
+      <div className="px-4 py-3 bg-white border-b border-stone-100">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <input
+            type="text"
+            placeholder="Search menu..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-9 pr-9 rounded-xl bg-stone-100 border border-stone-200/60 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-300 transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Category Navigation Bar */}
       {categories.length > 0 && (
@@ -100,7 +169,7 @@ export default function CustomerMenuPage() {
       )}
 
       {/* Main Content Area */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 pb-28">
         {isLoading ? (
           <div className="space-y-3">
             <ProductCardSkeleton />
@@ -117,12 +186,16 @@ export default function CustomerMenuPage() {
           <EmptyState
             icon={UtensilsCrossed}
             title={
-              selectedCategoryId
-                ? "No products in this category"
+              searchQuery
+                ? "No items found"
+                : selectedCategoryId
+                ? "No items in this category"
                 : "No menu items available"
             }
             description={
-              selectedCategoryId
+              searchQuery
+                ? `No menu items match "${searchQuery}". Try a different search.`
+                : selectedCategoryId
                 ? "Items for this category will appear here once added by the cafe."
                 : "The cafe has not added any menu items yet. Please check back shortly."
             }
@@ -132,13 +205,25 @@ export default function CustomerMenuPage() {
             }
           />
         ) : (
-          <div className="space-y-3">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.product_id}
-                product={product}
-                currency={cafe?.currency || "INR"}
-              />
+          <div className="space-y-6">
+            {groupedProducts.map((group, groupIdx) => (
+              <div key={group.categoryName || groupIdx}>
+                {group.categoryName && (
+                  <h3 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-3 px-1">
+                    {group.categoryName}
+                  </h3>
+                )}
+                <div className="space-y-2.5">
+                  {group.products.map((product) => (
+                    <ProductCard
+                      key={product.product_id}
+                      product={product}
+                      currency={cafe?.currency || "INR"}
+                      onViewDetail={setSelectedProduct}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -149,6 +234,15 @@ export default function CustomerMenuPage() {
 
       {/* Cart Drawer & Checkout Form */}
       <CartDrawer onOrderPlaced={handleOrderPlaced} />
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          currency={cafe?.currency || "INR"}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
 
       {/* Order Tracking & Status Modal */}
       <OrderTimeline

@@ -74,6 +74,40 @@ export interface Table {
   updated_at: string;
 }
 
+// ─── Add-on System Types ────────────────────────────────────────────────────
+
+export interface AddonItem {
+  addon_item_id: string;
+  name: string;
+  price: number;
+  is_available: boolean;
+}
+
+export interface AddonGroup {
+  addon_group_id: string;
+  cafe_id: string;
+  name: string;
+  description?: string;
+  is_required: boolean;
+  max_selections: number;
+  min_selections: number;
+  display_order: number;
+  items: AddonItem[];
+  product_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderAddonSelection {
+  addon_group_id: string;
+  addon_group_name: string;
+  addon_item_id: string;
+  addon_item_name: string;
+  price: number;
+}
+
+// ─── Order Types ────────────────────────────────────────────────────────────
+
 export type OrderType = "DINE_IN" | "TAKEAWAY";
 
 export type OrderStatus =
@@ -92,6 +126,8 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  addons?: OrderAddonSelection[];
+  addons_total?: number;
 }
 
 export interface Order {
@@ -122,6 +158,7 @@ export interface CartItem {
   quantity: number;
   image_url?: string;
   category_id?: string;
+  addons?: OrderAddonSelection[];
 }
 
 export interface ApiResponse<T> {

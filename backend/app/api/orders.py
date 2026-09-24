@@ -7,6 +7,7 @@ from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.table_repository import TableRepository
 from app.repositories.cafe_repository import CafeRepository
+from app.repositories.addon_repository import AddonRepository
 from app.services.order_service import OrderService
 from app.schemas.order import OrderCreateRequest, OrderResponse, OrderStatusUpdate
 
@@ -46,7 +47,14 @@ async def create_customer_order(
     order_repo = OrderRepository(db)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
-    service = OrderService(order_repo, product_repo, table_repo, cafe_repo)
+    addon_repo = AddonRepository(db)
+    service = OrderService(
+        order_repo=order_repo,
+        product_repo=product_repo,
+        table_repo=table_repo,
+        cafe_repo=cafe_repo,
+        addon_repo=addon_repo,
+    )
 
     return await service.create_order(cafe["cafe_id"], data.model_dump())
 

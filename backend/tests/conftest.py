@@ -50,15 +50,27 @@ class MockAsyncCollection:
                 if not all(self._match(doc, subq) for subq in v):
                     return False
                 continue
+            if k == "$or":
+                if not any(self._match(doc, subq) for subq in v):
+                    return False
+                continue
             if isinstance(v, dict):
                 if "$in" in v:
-                    if doc.get(k) not in v["$in"]:
+                    doc_val = doc.get(k)
+                    if isinstance(doc_val, list):
+                        if not any(item in v["$in"] for item in doc_val):
+                            return False
+                    elif doc_val not in v["$in"]:
                         return False
                 if "$gte" in v:
                     if doc.get(k) is None or doc.get(k) < v["$gte"]:
                         return False
             else:
-                if doc.get(k) != v:
+                doc_val = doc.get(k)
+                if isinstance(doc_val, list) and not isinstance(v, list):
+                    if v not in doc_val:
+                        return False
+                elif doc_val != v:
                     return False
         return True
 
@@ -116,6 +128,17 @@ class MockAsyncDatabase:
         self.products = MockAsyncCollection("products")
         self.tables = MockAsyncCollection("tables")
         self.orders = MockAsyncCollection("orders")
+        self.addon_groups = MockAsyncCollection("addon_groups")
+
+    def __getattr__(self, name: str):
+        if name not in self.__dict__:
+            col = MockAsyncCollection(name)
+            self.__dict__[name] = col
+            return col
+        return self.__dict__[name]
+
+    def __getitem__(self, name: str):
+        return getattr(self, name)
 
     async def command(self, cmd, *args, **kwargs):
         if cmd == "ping":

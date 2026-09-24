@@ -294,17 +294,24 @@ export default function AdminOrdersPage() {
                     {order.items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between text-xs pt-1.5 first:pt-0"
+                        className="pt-1.5 first:pt-0"
                       >
-                        <span className="text-white/90 truncate mr-2">
-                          <span className="font-semibold text-white">
-                            {item.quantity} ×
-                          </span>{" "}
-                          {item.product_name}
-                        </span>
-                        <span className="font-mono text-[oklch(0.70_0.03_280)] shrink-0">
-                          {formatCurrency(item.subtotal)}
-                        </span>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/90 truncate mr-2">
+                            <span className="font-semibold text-white">
+                              {item.quantity} ×
+                            </span>{" "}
+                            {item.product_name}
+                          </span>
+                          <span className="font-mono text-[oklch(0.70_0.03_280)] shrink-0">
+                            {formatCurrency(item.subtotal)}
+                          </span>
+                        </div>
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="text-[10px] text-[oklch(0.85_0.15_305)] pl-4 truncate mt-0.5">
+                            {item.addons.map((a) => `+ ${a.addon_item_name || (a as any).name}`).join(", ")}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -517,15 +524,30 @@ export default function AdminOrdersPage() {
                     {selectedOrder.items.map((item, idx) => (
                       <tr key={idx} className="hover:bg-[oklch(1_0_0/3%)]">
                         <td className="py-2.5 px-3 font-medium text-white/90">
-                          {item.product_name}
+                          <div>{item.product_name}</div>
+                          {item.addons && item.addons.length > 0 && (
+                            <div className="text-[11px] text-[oklch(0.85_0.15_305)] mt-1 space-y-0.5">
+                              {item.addons.map((a, aIdx) => (
+                                <div key={aIdx} className="flex items-center gap-1.5">
+                                  <span className="text-white/40">•</span>
+                                  <span>{a.addon_item_name || (a as any).name}</span>
+                                  {a.price > 0 && (
+                                    <span className="text-[oklch(0.70_0.03_280)] font-mono text-[10px]">
+                                      (+{formatCurrency(a.price)})
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
-                        <td className="py-2.5 px-3 text-center text-white/80 font-mono">
+                        <td className="py-2.5 px-3 text-center text-white/80 font-mono align-top">
                           {item.quantity}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-[oklch(0.70_0.03_280)] font-mono">
+                        <td className="py-2.5 px-3 text-right text-[oklch(0.70_0.03_280)] font-mono align-top">
                           {formatCurrency(item.unit_price)}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-semibold text-white font-mono">
+                        <td className="py-2.5 px-3 text-right font-semibold text-white font-mono align-top">
                           {formatCurrency(item.subtotal)}
                         </td>
                       </tr>
