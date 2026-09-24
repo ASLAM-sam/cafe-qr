@@ -6,6 +6,29 @@
     --tenant-primary-hover: #1e293b;
     --tenant-primary-foreground: #ffffff;
     --tenant-accent: #f8fafc;
+
+    /* Luxury Dark Theme Tokens (ApexNova Design System) */
+    --lux-bg: oklch(0.13 0.02 280);
+    --lux-fg: oklch(0.98 0.005 280);
+    --lux-card: oklch(0.18 0.025 280);
+    --lux-card-fg: oklch(0.98 0.005 280);
+    --lux-popover: oklch(0.16 0.025 280);
+    --lux-popover-fg: oklch(0.98 0.005 280);
+    --lux-primary: oklch(0.62 0.27 305);
+    --lux-primary-fg: oklch(0.99 0.005 280);
+    --lux-royal: oklch(0.55 0.25 270);
+    --lux-gold: oklch(0.82 0.14 85);
+    --lux-secondary: oklch(0.22 0.03 280);
+    --lux-secondary-fg: oklch(0.98 0.005 280);
+    --lux-muted: oklch(0.20 0.025 280);
+    --lux-muted-fg: oklch(0.70 0.03 280);
+    --lux-accent: oklch(0.55 0.25 270);
+    --lux-accent-fg: oklch(0.99 0.005 280);
+    --lux-destructive: oklch(0.60 0.24 25);
+    --lux-destructive-fg: oklch(0.99 0.005 280);
+    --lux-border: oklch(1 0 0 / 8%);
+    --lux-input: oklch(1 0 0 / 10%);
+    --lux-ring: oklch(0.62 0.27 305);
   }
 
   * {
@@ -43,4 +66,95 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Luxury Dark System Animation Keyframes */
+@keyframes lux-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes lux-float-subtle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes lux-pulse-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes lux-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Luxury Utility Classes */
+.animate-lux-float {
+  animation: lux-float 6s ease-in-out infinite;
+}
+
+.animate-lux-float-subtle {
+  animation: lux-float-subtle 4s ease-in-out infinite;
+}
+
+.animate-lux-pulse-glow {
+  animation: lux-pulse-glow 8s ease-in-out infinite;
+}
+
+.lux-glass {
+  background-color: oklch(0.18 0.025 280 / 65%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid oklch(1 0 0 / 8%);
+}
+
+.lux-glass-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lux-glass-hover:hover {
+  background-color: oklch(0.20 0.028 280 / 80%);
+  border-color: oklch(0.62 0.27 305 / 35%);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px -10px oklch(0.62 0.27 305 / 20%), 0 0 1px 1px oklch(0.62 0.27 305 / 15%);
+}
+
+.lux-glass-interactive {
+  transition: all 0.25s ease;
+}
+
+.lux-glass-interactive:hover {
+  border-color: oklch(0.55 0.25 270 / 40%);
+  box-shadow: 0 10px 25px -5px oklch(0.55 0.25 270 / 18%);
+}
+
+/* Accessibility: Respect Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

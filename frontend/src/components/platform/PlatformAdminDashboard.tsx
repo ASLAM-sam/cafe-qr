@@ -6,22 +6,19 @@ import {
   Coffee,
   Plus,
   ExternalLink,
-  Shield,
+  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Building2,
+  LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { platformService } from "@/services/apiClient";
 import { User } from "@/types";
-import { LogOut } from "lucide-react";
 
 interface ManagedCafe {
   cafe_id?: string;
@@ -56,7 +53,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
     owner_email: "",
     owner_password: "",
     currency: "INR",
-    primary_color: "#0f172a",
+    primary_color: "#7e22ce",
     description: "",
   });
 
@@ -121,7 +118,6 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
         created_at: new Date().toISOString(),
       };
 
-      // Persist in local storage for session review
       const currentList = [...cafes, newCafe];
       setCafes(currentList);
       if (typeof window !== "undefined") {
@@ -145,7 +141,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
         owner_email: "",
         owner_password: "",
         currency: "INR",
-        primary_color: "#0f172a",
+        primary_color: "#7e22ce",
         description: "",
       });
     } catch (err: unknown) {
@@ -160,24 +156,24 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70">
+    <div className="min-h-screen bg-[oklch(0.13_0.02_280)] text-[oklch(0.98_0.005_280)] selection:bg-[oklch(0.62_0.27_305)] selection:text-white">
       {/* Top Header */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs">
-              <Shield className="h-5 w-5 text-amber-400" />
+      <header className="border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.15_0.022_280/85%)] backdrop-blur-xl sticky top-0 z-40">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-lg shadow-[oklch(0.62_0.27_305/25%)]">
+              <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-slate-900">
-                  Platform Admin
+                <span className="text-base font-bold text-white tracking-tight">
+                  Platform Administration
                 </span>
-                <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                <span className="rounded-full bg-[oklch(0.82_0.14_85/15%)] border border-[oklch(0.82_0.14_85/30%)] px-2 py-0.5 text-[10px] font-bold text-[oklch(0.82_0.14_85)] uppercase tracking-wider">
                   Root
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[oklch(0.70_0.03_280)]">
                 Manage all café tenants across the platform
               </p>
             </div>
@@ -185,21 +181,24 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
 
           <div className="flex items-center gap-3">
             {user?.username && (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
-                <span className="text-slate-400">User:</span>
-                <span className="font-semibold text-slate-900">{user.username}</span>
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[oklch(0.18_0.025_280)] border border-[oklch(1_0_0/10%)] text-xs font-medium text-[oklch(0.70_0.03_280)]">
+                <span>Admin:</span>
+                <span className="font-semibold text-white">{user.username}</span>
               </div>
             )}
             <Link href="/">
-              <Button variant="outline" size="sm" className="text-xs">
-                View Platform Website
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs border-[oklch(1_0_0/10%)] bg-[oklch(0.18_0.025_280)] hover:bg-[oklch(0.22_0.03_280)] text-white h-9 rounded-xl"
+              >
+                Platform Website
               </Button>
             </Link>
             <Button
-              variant="primary"
               size="sm"
               onClick={() => setIsModalOpen(true)}
-              className="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-xs"
+              className="text-xs bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] hover:opacity-95 text-white font-bold h-9 rounded-xl shadow-md shadow-[oklch(0.62_0.27_305/20%)]"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               <span>Onboard New Café</span>
@@ -208,7 +207,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               variant="outline"
               size="sm"
               onClick={handleSignOut}
-              className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+              className="text-xs text-rose-300 hover:text-rose-200 bg-[oklch(0.18_0.025_280)] hover:bg-rose-950/40 border-[oklch(1_0_0/10%)] h-9 rounded-xl"
             >
               <LogOut className="h-3.5 w-3.5 mr-1.5" />
               <span>Sign Out</span>
@@ -218,138 +217,140 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-          <Card className="border-slate-200 shadow-xs">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Total Registered Cafés
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-extrabold text-slate-900">
-                {cafes.length}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Active tenant subdomains on platform
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-10">
+          <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
+            <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
+              Total Registered Cafés
+            </div>
+            <div className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              {cafes.length}
+            </div>
+            <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
+              Active tenant subdomains on platform
+            </p>
+          </div>
 
-          <Card className="border-slate-200 shadow-xs">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Active Tenants
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-extrabold text-emerald-600">
-                {cafes.filter((c) => c.status === "ACTIVE").length}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Ready to accept customer QR orders
-              </p>
-            </CardContent>
-          </Card>
+          <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
+            <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
+              Active Tenants
+            </div>
+            <div className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight">
+              {cafes.filter((c) => c.status === "ACTIVE").length}
+            </div>
+            <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
+              Ready to accept customer QR orders
+            </p>
+          </div>
 
-          <Card className="border-slate-200 shadow-xs">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Platform Architecture
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span>Multi-Tenant Isolated</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Single codebase & MongoDB Atlas instance
-              </p>
-            </CardContent>
-          </Card>
+          <div className="lux-glass rounded-2xl p-6 border border-[oklch(1_0_0/10%)]">
+            <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] uppercase tracking-wider mb-2">
+              Platform Architecture
+            </div>
+            <div className="flex items-center gap-2 text-base font-bold text-white tracking-tight">
+              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              <span>Multi-Tenant Isolated</span>
+            </div>
+            <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
+              Single codebase &amp; MongoDB Atlas cluster
+            </p>
+          </div>
         </div>
 
         {/* Café Directory Table */}
-        <Card className="border-slate-200 shadow-xs">
-          <CardHeader className="border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="lux-glass rounded-3xl border border-[oklch(1_0_0/10%)] overflow-hidden shadow-2xl">
+          <div className="p-6 sm:p-8 border-b border-[oklch(1_0_0/8%)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <h2 className="text-lg font-bold text-white tracking-tight">
                 Managed Café Tenants
-              </CardTitle>
-              <p className="text-xs text-slate-500 mt-0.5">
+              </h2>
+              <p className="text-xs text-[oklch(0.70_0.03_280)] mt-1">
                 Each café has its own isolated menu, orders, tables, and settings.
               </p>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
+            <Button
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+              className="sm:hidden text-xs bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold h-9 rounded-xl"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              <span>Onboard Café</span>
+            </Button>
+          </div>
+
+          <div>
             {isLoading ? (
-              <div className="p-8 text-center text-xs text-slate-400">
+              <div className="p-12 text-center text-xs text-[oklch(0.70_0.03_280)]">
                 Loading tenant directory...
               </div>
             ) : cafes.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={Building2}
-                  title="No Cafés Registered Yet"
-                  description="Use the button above to provision your first café tenant."
-                  actionLabel="Onboard New Café"
-                  onAction={() => setIsModalOpen(true)}
-                />
+              <div className="p-12 text-center">
+                <Building2 className="h-10 w-10 text-[oklch(0.70_0.03_280)] mx-auto mb-3" />
+                <div className="text-sm font-bold text-white">No Cafés Registered Yet</div>
+                <div className="text-xs text-[oklch(0.70_0.03_280)] mt-1 mb-4">
+                  Use the button above to provision your first café tenant.
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold text-xs"
+                >
+                  Onboard First Café
+                </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <thead className="border-b border-[oklch(1_0_0/8%)] bg-[oklch(0.15_0.022_280)] text-[11px] font-bold uppercase tracking-wider text-[oklch(0.70_0.03_280)]">
                     <tr>
-                      <th className="px-5 py-3">Café Name</th>
-                      <th className="px-5 py-3">Subdomain</th>
-                      <th className="px-5 py-3">Owner Contact</th>
-                      <th className="px-5 py-3">Currency</th>
-                      <th className="px-5 py-3">Status</th>
-                      <th className="px-5 py-3 text-right">Quick Actions</th>
+                      <th className="px-6 py-4">Café Name</th>
+                      <th className="px-6 py-4">Subdomain</th>
+                      <th className="px-6 py-4">Owner Contact</th>
+                      <th className="px-6 py-4">Currency</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Quick Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200/75">
+                  <tbody className="divide-y divide-[oklch(1_0_0/6%)]">
                     {cafes.map((cafe) => (
                       <tr
                         key={cafe.subdomain}
-                        className="hover:bg-slate-50/50 transition-colors"
+                        className="hover:bg-[oklch(0.20_0.025_280/50%)] transition-colors"
                       >
-                        <td className="px-5 py-3.5 font-semibold text-slate-900">
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600">
+                        <td className="px-6 py-4 font-semibold text-white">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-xl bg-[oklch(0.62_0.27_305/15%)] border border-[oklch(0.62_0.27_305/30%)] flex items-center justify-center text-[oklch(0.62_0.27_305)]">
                               <Coffee className="h-4 w-4" />
                             </div>
                             <span>{cafe.name}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 font-mono text-slate-600">
-                          <span className="rounded bg-slate-100 px-2 py-0.5 border border-slate-200">
+                        <td className="px-6 py-4 font-mono text-[oklch(0.70_0.03_280)]">
+                          <span className="rounded-lg bg-[oklch(0.15_0.022_280)] px-2.5 py-1 border border-[oklch(1_0_0/8%)] text-purple-300">
                             {cafe.subdomain}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-600">
-                          <div>{cafe.owner_name || "—"}</div>
-                          <div className="text-[11px] text-slate-400">
+                        <td className="px-6 py-4 text-[oklch(0.70_0.03_280)]">
+                          <div className="text-white font-medium">{cafe.owner_name || "—"}</div>
+                          <div className="text-[11px] text-[oklch(0.70_0.03_280)]">
                             {cafe.owner_email || "—"}
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-600 font-semibold">
+                        <td className="px-6 py-4 text-white font-bold">
                           {cafe.currency}
                         </td>
-                        <td className="px-5 py-3.5">
-                          <Badge status={cafe.status}>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
                             {cafe.status}
-                          </Badge>
+                          </span>
                         </td>
-                        <td className="px-5 py-3.5 text-right space-x-2">
+                        <td className="px-6 py-4 text-right space-x-2">
                           <a
                             href={`/?cafe=${encodeURIComponent(cafe.subdomain)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-md border border-amber-200 transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-300 hover:text-white bg-[oklch(0.62_0.27_305/15%)] hover:bg-[oklch(0.62_0.27_305/30%)] px-3 py-1.5 rounded-lg border border-[oklch(0.62_0.27_305/30%)] transition-colors"
                           >
                             <span>Customer Menu</span>
                             <ExternalLink className="h-3 w-3" />
@@ -358,7 +359,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                             href={`/login?cafe=${encodeURIComponent(cafe.subdomain)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border border-slate-200 transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 hover:text-white bg-[oklch(0.20_0.025_280)] hover:bg-[oklch(0.24_0.03_280)] px-3 py-1.5 rounded-lg border border-[oklch(1_0_0/10%)] transition-colors"
                           >
                             <span>Owner Login</span>
                             <ExternalLink className="h-3 w-3" />
@@ -370,8 +371,8 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
 
       {/* Onboard Café Modal */}
@@ -384,8 +385,8 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
       >
         <form onSubmit={handleCreateCafe} className="space-y-4">
           {submitError && (
-            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+            <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-300 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
               <span>{submitError}</span>
             </div>
           )}
@@ -409,7 +410,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
                 })
               }
               required
-              helperText="Will be used as: [subdomain].yourdomain.com"
+              helperText="Used as: [subdomain].yourdomain.com"
             />
           </div>
 
@@ -471,7 +472,7 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               type="submit"
               variant="primary"
               isLoading={isSubmitting}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
+              className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold"
             >
               Provision Café
             </Button>

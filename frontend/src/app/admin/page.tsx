@@ -50,8 +50,8 @@ export default function AdminControllerPage() {
 
   if (isTenantLoading || (isPlatform && isAuthChecking)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-xs font-semibold text-slate-400 animate-pulse">
+      <div className="flex min-h-screen items-center justify-center bg-[oklch(0.13_0.02_280)] text-[oklch(0.98_0.005_280)]">
+        <div className="text-xs font-semibold text-[oklch(0.70_0.03_280)] animate-pulse">
           Authenticating platform environment...
         </div>
       </div>

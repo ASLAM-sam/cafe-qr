@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { platformService } from "@/services/apiClient";
-import { Shield, Lock, Loader2, ArrowRight } from "lucide-react";
+import { ShieldCheck, Lock, Loader2, ArrowRight } from "lucide-react";
 import { User } from "@/types";
 
 interface PlatformAdminLoginProps {
@@ -50,50 +48,58 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
-      {/* Background Decorative Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="flex min-h-screen items-center justify-center bg-[oklch(0.13_0.02_280)] text-[oklch(0.98_0.005_280)] p-4 relative overflow-hidden">
+      {/* Ambient Radial Lights */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-[radial-gradient(circle,oklch(0.62_0.27_305/18%),transparent_65%)] blur-3xl pointer-events-none animate-lux-pulse-glow" />
+      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-[radial-gradient(circle,oklch(0.55_0.25_270/12%),transparent_65%)] blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
-        {/* Platform Brand Header */}
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-white shadow-xl">
-            <Shield className="h-7 w-7 text-amber-400" />
+        {/* Brand Header */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white shadow-xl shadow-[oklch(0.62_0.27_305/30%)]">
+            <ShieldCheck className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
             Platform Administration
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Sign in with your administrator username and password to manage all cafés
+          <p className="text-xs text-[oklch(0.70_0.03_280)] mt-2">
+            Secure management console for multi-tenant café provisioning
           </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base text-white font-bold">
+        {/* Login Card */}
+        <div className="lux-glass rounded-3xl p-6 sm:p-8 border border-[oklch(1_0_0/10%)] shadow-2xl">
+          <div className="flex items-center justify-between pb-5 border-b border-[oklch(1_0_0/8%)] mb-6">
+            <div>
+              <h2 className="text-base font-bold text-white">
                 Platform Owner Sign In
-              </CardTitle>
-              <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                Root Access
-              </span>
+              </h2>
+              <p className="text-[11px] text-[oklch(0.70_0.03_280)] mt-0.5">
+                Restricted to authorized SaaS administrators
+              </p>
             </div>
-            <CardDescription className="text-slate-400 text-xs">
-              This area is restricted to authorized platform administrators.
-            </CardDescription>
-          </CardHeader>
+            <span className="rounded-full bg-[oklch(0.82_0.14_85/15%)] border border-[oklch(0.82_0.14_85/35%)] px-2.5 py-0.5 text-[10px] font-bold text-[oklch(0.82_0.14_85)] uppercase tracking-wider">
+              Root Access
+            </span>
+          </div>
 
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
-              {errorMessage && (
-                <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-300 flex items-center gap-2 animate-in fade-in">
-                  <Lock className="h-4 w-4 shrink-0 text-rose-400" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
+          <form onSubmit={handleLogin} className="space-y-4">
+            {errorMessage && (
+              <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-300 flex items-center gap-2.5 animate-in fade-in">
+                <Lock className="h-4 w-4 shrink-0 text-rose-400" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
-              <Input
-                label="Username"
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-xs font-semibold text-slate-300 mb-1.5"
+              >
+                Administrator Username
+              </label>
+              <input
+                id="username"
                 type="text"
                 placeholder="aslam"
                 value={username}
@@ -101,11 +107,19 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
                 autoComplete="username"
                 required
                 disabled={isLoading}
-                className="bg-slate-950/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-400"
+                className="w-full h-11 px-3.5 rounded-xl bg-[oklch(0.15_0.022_280)] border border-[oklch(1_0_0/12%)] text-white placeholder-[oklch(0.70_0.03_280)] text-xs focus:outline-hidden focus:border-[oklch(0.62_0.27_305)] transition-colors"
               />
+            </div>
 
-              <Input
-                label="Password"
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-xs font-semibold text-slate-300 mb-1.5"
+              >
+                Password
+              </label>
+              <input
+                id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -113,15 +127,15 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
                 autoComplete="current-password"
                 required
                 disabled={isLoading}
-                className="bg-slate-950/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-400"
+                className="w-full h-11 px-3.5 rounded-xl bg-[oklch(0.15_0.022_280)] border border-[oklch(1_0_0/12%)] text-white placeholder-[oklch(0.70_0.03_280)] text-xs focus:outline-hidden focus:border-[oklch(0.62_0.27_305)] transition-colors"
               />
-            </CardContent>
+            </div>
 
-            <CardFooter className="flex flex-col gap-3 pt-2">
+            <div className="pt-2">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 transition-colors shadow-sm"
+                className="w-full bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] hover:opacity-95 text-white font-bold text-xs h-11 rounded-xl shadow-lg shadow-[oklch(0.62_0.27_305/25%)] transition-opacity"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -130,17 +144,17 @@ export function PlatformAdminLogin({ onLoginSuccess }: PlatformAdminLoginProps) 
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    <span>Sign In</span>
+                    <span>Authenticate Platform</span>
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
               </Button>
-            </CardFooter>
+            </div>
           </form>
-        </Card>
+        </div>
 
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Café QR Ordering SaaS &mdash; Single Platform, Infinite Cafés
+        <div className="mt-8 text-center text-xs text-[oklch(0.70_0.03_280)]">
+          Café QR SaaS &mdash; Single Platform, Infinite Cafés
         </div>
       </div>
     </div>

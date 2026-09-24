@@ -89,7 +89,7 @@ export function TenantProvider({
   children,
   initialCafe = null,
   initialSubdomain = null,
-  initialIsPlatform = false,
+  initialIsPlatform = true,
 }: {
   children: React.ReactNode;
   initialCafe?: Cafe | null;
@@ -101,7 +101,7 @@ export function TenantProvider({
   const [isPlatform, setIsPlatform] = React.useState<boolean>(initialIsPlatform);
   const [tableToken, setTableToken] = React.useState<string | null>(null);
   const [tableNumber, setTableNumber] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState<boolean>(!initialCafe && !initialIsPlatform);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
