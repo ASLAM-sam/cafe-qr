@@ -1,20 +1,29 @@
 import asyncio
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.repositories.order_repository import OrderRepository
 
 
 @pytest.mark.asyncio
-async def test_order_number_atomic_concurrency(mock_db):
+async def test_order_number_atomic_concurrency(pg_test_engine):
     """
     Verify that 100 simultaneous concurrent requests to generate order numbers
-    using the atomic sequence increment on the counters collection result in
+    using the atomic sequence increment on PostgreSQL result in
     100 completely unique, sequential order numbers for a cafe without collisions.
     """
-    repo = OrderRepository(mock_db)
+    session_factory = async_sessionmaker(
+        bind=pg_test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
     cafe_id = "cafe_concurrency_test"
 
     async def get_number():
-        return await repo.get_next_order_number(cafe_id)
+        async with session_factory() as session:
+            repo = OrderRepository(session)
+            num = await repo.get_next_order_number(cafe_id)
+            await session.commit()
+            return num
 
     # Launch 100 concurrent tasks simultaneously
     order_numbers = await asyncio.gather(*(get_number() for _ in range(100)))
@@ -32,12 +41,12 @@ async def test_order_number_atomic_concurrency(mock_db):
 
 
 @pytest.mark.asyncio
-async def test_order_number_per_cafe_isolation(mock_db):
+async def test_order_number_per_cafe_isolation(pg_session):
     """
     Verify that sequence counters are strictly partitioned by cafe_id.
     Cafe A and Cafe B both start at 1001 independently.
     """
-    repo = OrderRepository(mock_db)
+    repo = OrderRepository(pg_session)
 
     num_a1 = await repo.get_next_order_number("cafe_alpha")
     num_b1 = await repo.get_next_order_number("cafe_beta")
@@ -116,3 +125,51 @@ async def test_order_idempotency_duplicate_protection(async_client, auth_headers
     assert res3.status_code == 201
     order3 = res3.json()
     assert order3["order_id"] != order_id_1
+
+
+@pytest.mark.asyncio
+async def test_50_concurrent_complete_orders(pg_test_engine):
+    """
+    Step 9: Verify 50 concurrent complete orders placed in PostgreSQL.
+    All 50 receive sequential numbers #1001 through #1050 without collision, race conditions, or missing numbers.
+    """
+    session_factory = async_sessionmaker(
+        bind=pg_test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+    cafe_id = "cafe_50_concurrency"
+
+    async def place_order(i: int):
+        async with session_factory() as session:
+            repo = OrderRepository(session)
+            num = await repo.get_next_order_number(cafe_id)
+            order_data = {
+                "order_id": f"ord_concurrent_{i}_{num}",
+                "order_number": num,
+                "order_reference": f"ref_concurrent_{i}_{num}",
+                "cafe_id": cafe_id,
+                "order_type": "DINE_IN",
+                "subtotal": 100.0,
+                "tax": 5.0,
+                "discount": 0.0,
+                "total": 105.0,
+                "items": [
+                    {
+                        "product_id": f"prod_{i}",
+                        "product_name": f"Item {i}",
+                        "quantity": 1,
+                        "unit_price": 100.0,
+                        "subtotal": 100.0,
+                    }
+                ],
+            }
+            order = await repo.create(order_data)
+            await session.commit()
+            return order
+
+    orders = await asyncio.gather(*(place_order(i) for i in range(50)))
+    assert len(orders) == 50
+    order_numbers = [int(o["order_number"]) for o in orders]
+    assert len(set(order_numbers)) == 50, "Every order number must be unique"
+    assert sorted(order_numbers) == list(range(1001, 1051)), "Order numbers must be contiguous from 1001 to 1050"

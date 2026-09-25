@@ -8,8 +8,11 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.pool import StaticPool
 from app.main import app
-from app.core.dependencies import get_db
+from app.models.order import Base
+from app.core.dependencies import get_db, get_postgres_session
 from app.core.security import hash_password, create_access_token
 
 
@@ -139,7 +142,6 @@ class MockAsyncDatabase:
         self.categories = MockAsyncCollection("categories")
         self.products = MockAsyncCollection("products")
         self.tables = MockAsyncCollection("tables")
-        self.orders = MockAsyncCollection("orders")
         self.addon_groups = MockAsyncCollection("addon_groups")
 
     def __getattr__(self, name: str):
@@ -249,8 +251,52 @@ def platform_admin_headers(mock_db):
 
 
 @pytest.fixture
-async def async_client(mock_db):
+async def pg_test_engine():
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield engine
+    await engine.dispose()
+
+
+@pytest.fixture
+async def pg_session(pg_test_engine):
+    session_factory = async_sessionmaker(
+        bind=pg_test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    async with session_factory() as session:
+        yield session
+
+
+@pytest.fixture
+async def async_client(mock_db, pg_test_engine):
     app.dependency_overrides[get_db] = lambda: mock_db
+
+    session_factory = async_sessionmaker(
+        bind=pg_test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+
+    async def override_get_postgres_session():
+        async with session_factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+
+    app.dependency_overrides[get_postgres_session] = override_get_postgres_session
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client

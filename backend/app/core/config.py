@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     MONGODB_URI: str = "mongodb://localhost:27017"
     MONGODB_DATABASE: str = "cafe_qr_ordering"
 
+    # PostgreSQL (Order Storage & Financial Aggregations)
+    POSTGRES_DATABASE_URL: Optional[str] = None
+
     # Authentication & Security
     JWT_SECRET: str = "production_cafe_qr_secret_key_change_via_env_var"
     JWT_ALGORITHM: str = "HS256"

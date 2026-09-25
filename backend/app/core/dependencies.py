@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.config import settings
 from app.core.database import get_database
+from app.core.postgres_database import get_postgres_session
 from app.core.security import decode_access_token
 from app.repositories.user_repository import UserRepository
 from app.repositories.cafe_repository import CafeRepository
@@ -15,6 +16,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=Fals
 def get_db() -> AsyncIOMotorDatabase:
     """Dependency to provide database instance."""
     return get_database()
+
+
+def get_pg_session():
+    """Alias for get_postgres_session."""
+    return get_postgres_session()
 
 
 async def get_current_user(

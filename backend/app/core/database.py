@@ -100,15 +100,7 @@ async def create_indexes():
             IndexModel([("cafe_id", ASCENDING)], name="idx_table_cafe"),
         ])
 
-        # Orders: cafe_id + order_status, created_at, unique order_reference, unique order_number per cafe, idempotency_key
-        await db_state.db.orders.create_indexes([
-            IndexModel([("cafe_id", ASCENDING)], name="idx_order_cafe"),
-            IndexModel([("cafe_id", ASCENDING), ("order_number", ASCENDING)], unique=True, name="idx_order_cafe_num"),
-            IndexModel([("cafe_id", ASCENDING), ("order_status", ASCENDING)], name="idx_order_status"),
-            IndexModel([("cafe_id", ASCENDING), ("created_at", ASCENDING)], name="idx_order_created"),
-            IndexModel([("order_reference", ASCENDING)], unique=True, name="idx_order_ref"),
-            IndexModel([("cafe_id", ASCENDING), ("idempotency_key", ASCENDING)], sparse=True, name="idx_order_idempotency"),
-        ])
+        # Orders have migrated to PostgreSQL (single source of truth; no MongoDB index needed)
 
         # Addon Groups: cafe_id + addon_group_id (unique), product_ids, display_order
         await db_state.db.addon_groups.create_indexes([

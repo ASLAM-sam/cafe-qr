@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
+from app.core.postgres_database import close_postgres_connection
 from app.api import health, auth, cafes, categories, products, tables, orders, platform, realtime, addons
 
 # Configure structured logging
@@ -56,6 +57,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down Café QR Ordering Backend...")
     await close_mongo_connection()
+    await close_postgres_connection()
 
 
 app = FastAPI(

@@ -1,7 +1,13 @@
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, Query, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.core.dependencies import get_db, get_current_tenant_cafe, get_public_subdomain
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.dependencies import (
+    get_db,
+    get_postgres_session,
+    get_current_tenant_cafe,
+    get_public_subdomain,
+)
 from app.core.rate_limit import order_rate_limiter
 from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import ProductRepository
@@ -21,10 +27,12 @@ async def create_customer_order(
     request: Request,
     subdomain: str = Depends(get_public_subdomain),
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
     """
     Public customer endpoint: place an order.
-    The backend computes all prices, subtotals, and taxes authoritative from database.
+    The backend computes all prices, subtotals, and taxes authoritative from MongoDB.
+    Order persistence and financial snapshots are committed to PostgreSQL.
     """
     order_rate_limiter.check(request)
     cafe_repo = CafeRepository(db)
@@ -44,7 +52,7 @@ async def create_customer_order(
             detail="Cafe not found for this order submission.",
         )
 
-    order_repo = OrderRepository(db)
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     addon_repo = AddonRepository(db)
@@ -69,9 +77,10 @@ async def create_customer_order(
 async def get_customer_order_status(
     order_reference: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
-    """Public customer endpoint: track order status securely via unguessable order reference."""
-    order_repo = OrderRepository(db)
+    """Public customer endpoint: track order status securely from PostgreSQL via unguessable order reference."""
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
@@ -87,9 +96,10 @@ async def list_admin_orders(
     skip: int = Query(0, ge=0),
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
-    """Authenticated café admin endpoint: fetch live and historical orders."""
-    order_repo = OrderRepository(db)
+    """Authenticated café admin endpoint: fetch live and historical orders from PostgreSQL (60-day filter)."""
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
@@ -107,9 +117,10 @@ async def get_order_details(
     order_id: str,
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
-    """Authenticated café admin endpoint: fetch complete order details."""
-    order_repo = OrderRepository(db)
+    """Authenticated café admin endpoint: fetch complete order details from PostgreSQL."""
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
@@ -123,12 +134,13 @@ async def update_order_status(
     update: OrderStatusUpdate,
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
     """
-    Authenticated café admin endpoint: advance order through state machine.
+    Authenticated café admin endpoint: advance order through state machine in PostgreSQL.
     (PLACED -> ACCEPTED -> PREPARING -> READY -> COMPLETED / CANCELLED)
     """
-    order_repo = OrderRepository(db)
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
@@ -140,18 +152,30 @@ async def update_order_status(
     )
 
 
-@router.get("/api/admin/dashboard/stats")
-async def get_dashboard_stats(
+@router.get("/api/orders/{order_id}/history")
+async def get_order_history(
+    order_id: str,
     current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
     db: AsyncIOMotorDatabase = Depends(get_db),
+    pg_session: AsyncSession = Depends(get_postgres_session),
 ):
-    """
-    Authenticated café admin endpoint: fetch live counts for the dashboard.
-    Returns genuine real data (0s when empty - strictly no fake numbers).
-    """
-    order_repo = OrderRepository(db)
+    """Authenticated café admin endpoint: fetch audit log of status transitions from PostgreSQL."""
+    order_repo = OrderRepository(pg_session)
     product_repo = ProductRepository(db)
     table_repo = TableRepository(db)
     cafe_repo = CafeRepository(db)
     service = OrderService(order_repo, product_repo, table_repo, cafe_repo)
-    return await service.get_dashboard_stats(current_cafe["cafe_id"])
+    return await service.get_order_status_history(current_cafe["cafe_id"], order_id)
+
+
+@router.get("/api/admin/dashboard/stats")
+async def get_dashboard_stats(
+    current_cafe: Dict[str, Any] = Depends(get_current_tenant_cafe),
+    pg_session: AsyncSession = Depends(get_postgres_session),
+):
+    """
+    Authenticated café admin endpoint: fetch live counts for the dashboard from PostgreSQL.
+    Returns genuine real data (0s when empty - strictly no fake numbers).
+    """
+    order_repo = OrderRepository(pg_session)
+    return await order_repo.get_dashboard_stats(current_cafe["cafe_id"])

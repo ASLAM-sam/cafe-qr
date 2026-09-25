@@ -122,10 +122,8 @@ class OrderService:
         try:
             repo = self.addon_repo
             if repo is None:
-                db = getattr(self.order_repo.collection, "database", None)
-                if db is None:
-                    from app.core.database import get_database
-                    db = get_database()
+                from app.core.database import get_database
+                db = get_database()
                 repo = AddonRepository(db)
             all_addon_groups = await repo.get_for_products(cafe_id, product_ids)
             for ag in all_addon_groups:
@@ -350,3 +348,6 @@ class OrderService:
 
     async def get_dashboard_stats(self, cafe_id: str) -> Dict[str, int]:
         return await self.order_repo.get_dashboard_stats(cafe_id)
+
+    async def get_order_status_history(self, cafe_id: str, order_id: str) -> List[Dict[str, Any]]:
+        return await self.order_repo.get_status_history(cafe_id, order_id)
