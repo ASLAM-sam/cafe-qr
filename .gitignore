@@ -37,3 +37,6 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Temporary scratch test files
+scratch/

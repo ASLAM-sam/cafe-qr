@@ -4,7 +4,9 @@ from app.core.dependencies import get_db, require_platform_admin
 from app.repositories.cafe_repository import CafeRepository
 from app.repositories.user_repository import UserRepository
 from app.services.cafe_service import CafeService
+from app.services.auth_service import AuthService
 from app.schemas.cafe import CafeCreate
+from app.schemas.auth import ChangePasswordRequest
 
 router = APIRouter(prefix="/api/platform", tags=["Platform Admin"])
 
@@ -38,4 +40,26 @@ async def platform_create_cafe(
     user_repo = UserRepository(db)
     service = CafeService(cafe_repo, user_repo)
     return await service.create_cafe_and_owner(data.model_dump())
+
+
+@router.post("/change-password")
+async def platform_change_password(
+    data: ChangePasswordRequest,
+    admin=Depends(require_platform_admin),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Platform Admin endpoint: Securely change Platform Admin password.
+    Requires authenticated PLATFORM_ADMIN role.
+    Requires current password verification before saving new password.
+    """
+    user_repo = UserRepository(db)
+    cafe_repo = CafeRepository(db)
+    auth_service = AuthService(user_repo, cafe_repo)
+    return await auth_service.change_password(
+        user_id=admin["user_id"],
+        current_password=data.current_password,
+        new_password=data.new_password,
+    )
+
 

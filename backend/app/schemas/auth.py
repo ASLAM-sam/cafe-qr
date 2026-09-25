@@ -34,3 +34,18 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Current password")
+    new_password: str = Field(..., min_length=8, description="New password, minimum 8 characters")
+    confirm_password: str = Field(..., min_length=8, description="Confirmation of new password")
+
+    @model_validator(mode="after")
+    def validate_passwords(self) -> "ChangePasswordRequest":
+        if self.new_password != self.confirm_password:
+            raise ValueError("New password and confirm password do not match.")
+        if self.current_password == self.new_password:
+            raise ValueError("New password cannot be identical to current password.")
+        return self
+

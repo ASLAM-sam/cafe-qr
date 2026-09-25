@@ -2,7 +2,7 @@ from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 from app.repositories.user_repository import UserRepository
 from app.repositories.cafe_repository import CafeRepository
-from app.core.security import verify_password, create_access_token
+from app.core.security import verify_password, create_access_token, hash_password
 
 
 class AuthService:
@@ -74,3 +74,40 @@ class AuthService:
             "token_type": "bearer",
             "user": user_copy,
         }
+
+    async def change_password(
+        self,
+        user_id: str,
+        current_password: str,
+        new_password: str,
+    ) -> Dict[str, Any]:
+        """
+        Securely change user password.
+        1. Verifies current password against stored bcrypt hash.
+        2. Validates new password and hashes it with bcrypt gensalt(rounds=12).
+        3. Persists new hash in MongoDB.
+        4. Never returns password or hash.
+        """
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        if not verify_password(current_password, user.get("password_hash", "")):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect.",
+            )
+
+        new_hash = hash_password(new_password)
+        updated = await self.user_repo.update_password(user_id, new_hash)
+        if not updated:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update password.",
+            )
+
+        return {"success": True, "message": "Password updated successfully."}
+

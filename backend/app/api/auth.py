@@ -7,7 +7,7 @@ from app.core.rate_limit import login_rate_limiter
 from app.repositories.user_repository import UserRepository
 from app.repositories.cafe_repository import CafeRepository
 from app.services.auth_service import AuthService
-from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, TokenResponse, UserResponse, ChangePasswordRequest
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -71,3 +71,25 @@ async def get_me(
         "user": current_user,
         "cafe": cafe,
     }
+
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Authenticated user endpoint: Securely change password.
+    Requires valid session token.
+    Requires current password verification before updating password.
+    """
+    user_repo = UserRepository(db)
+    cafe_repo = CafeRepository(db)
+    auth_service = AuthService(user_repo, cafe_repo)
+    return await auth_service.change_password(
+        user_id=current_user["user_id"],
+        current_password=data.current_password,
+        new_password=data.new_password,
+    )
+

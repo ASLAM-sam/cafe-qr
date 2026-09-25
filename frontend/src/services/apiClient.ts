@@ -479,4 +479,18 @@ export const platformService = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  changePassword: (data: {
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+  }) =>
+    request<{
+      success: boolean;
+      message: string;
+    }>(`/platform/change-password`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
+

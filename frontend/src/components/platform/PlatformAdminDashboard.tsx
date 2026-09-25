@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Building2,
   LogOut,
+  KeyRound,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -56,6 +57,47 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
     primary_color: "#7e22ce",
     description: "",
   });
+
+  // Password change state
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
+  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [passwordError, setPasswordError] = React.useState<string | null>(null);
+  const [passwordForm, setPasswordForm] = React.useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    if (passwordForm.new_password.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+    if (passwordForm.current_password === passwordForm.new_password) {
+      setPasswordError("New password cannot be identical to current password.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordError(null);
+    try {
+      await platformService.changePassword(passwordForm);
+      showToast("success", "Platform Admin password updated successfully.", "Security Updated");
+      setIsPasswordModalOpen(false);
+      setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to change password.";
+      setPasswordError(msg);
+      showToast("error", msg, "Update Failed");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -202,6 +244,19 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               <span>Add Cafe</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPasswordError(null);
+                setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+                setIsPasswordModalOpen(true);
+              }}
+              className="text-xs text-amber-300 hover:text-amber-200 bg-[oklch(0.18_0.025_280)] hover:bg-amber-950/40 border-[oklch(1_0_0/10%)] h-9 rounded-xl"
+            >
+              <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+              <span>Change Password</span>
             </Button>
             <Button
               variant="outline"
@@ -475,6 +530,77 @@ export function PlatformAdminDashboard({ user, onLogout }: PlatformAdminDashboar
               className="bg-gradient-to-r from-[oklch(0.62_0.27_305)] to-[oklch(0.55_0.25_270)] text-white font-bold"
             >
               Create Cafe
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={() => !isChangingPassword && setIsPasswordModalOpen(false)}
+        title="Change Platform Admin Password"
+      >
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Securely update the Platform Admin credentials. Your current password is required to verify identity.
+          </p>
+
+          {passwordError && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              <span>{passwordError}</span>
+            </div>
+          )}
+
+          <Input
+            label="Current Password"
+            type="password"
+            placeholder="••••••••"
+            value={passwordForm.current_password}
+            onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+            required
+            autoComplete="current-password"
+          />
+
+          <Input
+            label="New Password (min 8 characters)"
+            type="password"
+            placeholder="••••••••"
+            value={passwordForm.new_password}
+            onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+            required
+            minLength={8}
+            autoComplete="new-password"
+          />
+
+          <Input
+            label="Confirm New Password"
+            type="password"
+            placeholder="••••••••"
+            value={passwordForm.confirm_password}
+            onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+            required
+            minLength={8}
+            autoComplete="new-password"
+          />
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPasswordModalOpen(false)}
+              disabled={isChangingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isChangingPassword}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold"
+            >
+              Update Password
             </Button>
           </div>
         </form>

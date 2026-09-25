@@ -26,3 +26,12 @@ class UserRepository:
         await self.collection.insert_one(user_data)
         user_data.pop("_id", None)
         return user_data
+
+    async def update_password(self, user_id: str, new_password_hash: str) -> bool:
+        now = datetime.now(timezone.utc)
+        result = await self.collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"password_hash": new_password_hash, "updated_at": now}}
+        )
+        return result.matched_count > 0
+
